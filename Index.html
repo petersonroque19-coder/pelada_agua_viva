@@ -125,7 +125,7 @@
                 <!-- LISTA AVULSOS -->
                 <div id="sub-tab-avulsos" class="sub-tab-content bg-white rounded-xl shadow-sm overflow-hidden mb-4 border border-slate-200">
                     <div class="bg-orange-50 text-orange-800 p-3 border-b border-orange-100 font-semibold flex justify-between">
-                        <span>🏃‍♂️ Avulsos (R$ 20)</span>
+                        <span>🏃‍♂️ Avulsos</span>
                     </div>
                     <ul id="lista-avulsos" class="divide-y divide-slate-100 p-2">
                         <!-- Preenchido via JS -->
@@ -340,7 +340,7 @@
             <div class="mb-6">
                 <label class="block text-sm font-semibold text-slate-600 mb-1">Tipo</label>
                 <select id="jogador-tipo" class="w-full border rounded-lg p-2 focus:ring-emerald-500 focus:border-emerald-500">
-                    <option value="avulso">Avulso (R$ 20)</option>
+                    <option value="avulso">Avulso</option>
                     <option value="mensalista">Mensalista</option>
                 </select>
             </div>
@@ -401,7 +401,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const VALOR_AVULSO = 20.00;
+        const VALOR_PADRAO_AVULSO = 20.00;
         const VALOR_PADRAO_MENSALISTA = 60.00;
 
         let data = {
@@ -511,7 +511,6 @@
                 partidaAtualId = data.partidas[0].id;
             }
             
-            // Sessão persistente ativa
             if (localStorage.getItem('pelada_aguaviva_logada') === 'true') {
                 document.getElementById('modal-login').classList.remove('active');
             } else {
@@ -570,9 +569,11 @@
             let totalAvulsos = 0, totalMensalistas = 0;
             data.partidas.forEach(partida => {
                 partida.jogadores.forEach(jog => {
-                    if (jog.metodoPagamento) { 
+                    // Soma apenas se tiver método de pagamento selecionado E não for "isento"
+                    if (jog.metodoPagamento && jog.metodoPagamento !== 'isento') { 
                         if (jog.tipo === 'avulso') {
-                            totalAvulsos += VALOR_AVULSO;
+                            const valorAvulso = jog.valorCustom !== undefined && jog.valorCustom !== '' ? parseFloat(jog.valorCustom) : VALOR_PADRAO_AVULSO;
+                            totalAvulsos += valorAvulso;
                         } else if (jog.tipo === 'mensalista') {
                             const valorMensalista = jog.valorCustom !== undefined && jog.valorCustom !== '' ? parseFloat(jog.valorCustom) : VALOR_PADRAO_MENSALISTA;
                             totalMensalistas += valorMensalista;
@@ -583,7 +584,7 @@
             return { totalAvulsos, totalMensalistas };
         }
 
-        window.mudarValorMensalista = function(idJogador, novoValor) {
+        window.mudarValorJogador = function(idJogador, novoValor) {
             const partida = data.partidas.find(p => p.id === partidaAtualId);
             if (!partida) return;
             const jog = partida.jogadores.find(j => j.id === idJogador);
@@ -631,8 +632,13 @@
             let cMensPres = 0, cMensAus = 0, cAvul = 0;
 
             partida.jogadores.forEach(jog => {
-                const isPago = !!jog.metodoPagamento;
-                const selectStyle = isPago ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-500 border-slate-300';
+                const isPago = jog.metodoPagamento === 'pix' || jog.metodoPagamento === 'dinheiro';
+                const isIsento = jog.metodoPagamento === 'isento';
+                
+                let selectStyle = 'bg-slate-100 text-slate-500 border-slate-300'; // pendente (padrão)
+                if (isPago) selectStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                if (isIsento) selectStyle = 'bg-blue-100 text-blue-800 border-blue-300';
+
                 const badgeFalta = !jog.presente ? `<span class="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded uppercase font-bold">Faltou</span>` : '';
 
                 if (jog.tipo === 'mensalista') {
@@ -650,7 +656,7 @@
                             </div>
                             <div class="flex items-center justify-between mb-3 bg-white p-2 rounded border border-slate-100">
                                 <span class="text-xs font-semibold text-slate-600">Valor (R$):</span>
-                                <input type="number" step="0.01" value="${valorAtual}" onchange="mudarValorMensalista(${jog.id}, this.value)" class="w-24 border rounded p-1 text-xs font-bold text-right">
+                                <input type="number" step="0.01" value="${valorAtual}" onchange="mudarValorJogador(${jog.id}, this.value)" class="w-24 border rounded p-1 text-xs font-bold text-right">
                             </div>
                             <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100">
                                 <label class="flex items-center space-x-2 cursor-pointer">
@@ -658,23 +664,30 @@
                                     <span class="text-xs font-semibold text-slate-600">Jogou?</span>
                                 </label>
                                 <select onchange="changePaymentMethod(${jog.id}, this.value)" class="text-xs font-bold rounded py-1 px-2 border outline-none shadow-sm ${selectStyle}">
-                                    <option value="" ${!isPago ? 'selected' : ''}>⏳ Pendente</option>
+                                    <option value="" ${!jog.metodoPagamento ? 'selected' : ''}>⏳ Pendente</option>
                                     <option value="pix" ${jog.metodoPagamento === 'pix' ? 'selected' : ''}>✅ Pix</option>
                                     <option value="dinheiro" ${jog.metodoPagamento === 'dinheiro' ? 'selected' : ''}>✅ Dinheiro</option>
+                                    <option value="isento" ${jog.metodoPagamento === 'isento' ? 'selected' : ''}>🆓 Isento</option>
                                 </select>
                             </div>
                         </li>
                     `;
                 } else {
                     cAvul++;
+                    const valorAtualAvulso = jog.valorCustom !== undefined && jog.valorCustom !== '' ? jog.valorCustom : VALOR_PADRAO_AVULSO;
+
                     listAvulsos.innerHTML += `
                         <li class="p-3 bg-slate-50 rounded-lg mt-2 border border-slate-200">
-                            <div class="flex justify-between items-center mb-3">
+                            <div class="flex justify-between items-center mb-2">
                                 <p class="font-bold text-slate-700 flex items-center">${jog.nome} ${badgeFalta}</p>
                                 <div class="flex space-x-1">
                                     <button onclick="editPlayer(${jog.id})" class="text-blue-500 text-xs font-semibold bg-blue-100 px-2 py-1 rounded">Editar</button>
                                     <button onclick="deletePlayer(${jog.id})" class="text-red-500 text-xs font-bold bg-red-100 px-2 py-1 rounded">X</button>
                                 </div>
+                            </div>
+                            <div class="flex items-center justify-between mb-3 bg-white p-2 rounded border border-slate-100">
+                                <span class="text-xs font-semibold text-slate-600">Valor (R$):</span>
+                                <input type="number" step="0.01" value="${valorAtualAvulso}" onchange="mudarValorJogador(${jog.id}, this.value)" class="w-24 border rounded p-1 text-xs font-bold text-right">
                             </div>
                             <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100">
                                 <label class="flex items-center space-x-2 cursor-pointer">
@@ -682,9 +695,10 @@
                                     <span class="text-xs font-semibold text-slate-600">Jogou?</span>
                                 </label>
                                 <select onchange="changePaymentMethod(${jog.id}, this.value)" class="text-xs font-bold rounded py-1 px-2 border outline-none shadow-sm ${selectStyle}">
-                                    <option value="" ${!isPago ? 'selected' : ''}>⏳ Pendente</option>
+                                    <option value="" ${!jog.metodoPagamento ? 'selected' : ''}>⏳ Pendente</option>
                                     <option value="pix" ${jog.metodoPagamento === 'pix' ? 'selected' : ''}>✅ Pix</option>
                                     <option value="dinheiro" ${jog.metodoPagamento === 'dinheiro' ? 'selected' : ''}>✅ Dinheiro</option>
+                                    <option value="isento" ${jog.metodoPagamento === 'isento' ? 'selected' : ''}>🆓 Isento</option>
                                 </select>
                             </div>
                         </li>
@@ -963,9 +977,10 @@
                 if (!mesesMap[mesAno]) mesesMap[mesAno] = { receitas: 0, despesas: 0 };
                 
                 p.jogadores.forEach(j => {
-                    if (j.metodoPagamento) {
+                    if (j.metodoPagamento && j.metodoPagamento !== 'isento') {
                         if (j.tipo === 'avulso') {
-                            mesesMap[mesAno].receitas += VALOR_AVULSO;
+                            const valAv = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_AVULSO;
+                            mesesMap[mesAno].receitas += valAv;
                         } else if (j.tipo === 'mensalista') {
                             const val = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_MENSALISTA;
                             mesesMap[mesAno].receitas += val;
@@ -1102,7 +1117,8 @@
                 jog.nome = nome; jog.tipo = tipo;
             } else {
                 const novoId = partida.jogadores.length > 0 ? Math.max(...partida.jogadores.map(j => j.id)) + 1 : 1;
-                partida.jogadores.push({ id: novoId, nome, tipo, valorCustom: tipo === 'mensalista' ? VALOR_PADRAO_MENSALISTA : '', metodoPagamento: '', presente: true });
+                const valPadrao = tipo === 'mensalista' ? VALOR_PADRAO_MENSALISTA : VALOR_PADRAO_AVULSO;
+                partida.jogadores.push({ id: novoId, nome, tipo, valorCustom: valPadrao, metodoPagamento: '', presente: true });
             }
             closeModals();
             saveData();

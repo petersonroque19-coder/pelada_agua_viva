@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão da Pelada Água Viva</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; }
+        body { padding-bottom: 5rem; }
+        .modal { display: none; }
+        .modal.active { display: flex; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans">
+
+    <!-- TELA DE LOGIN -->
+    <div id="modal-login" class="modal fixed inset-0 bg-slate-900 z-50 items-center justify-center p-4 active">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
+            <h1 class="text-2xl font-bold text-emerald-600 mb-2">⚽ Gestão da Pelada</h1>
+            <p class="text-xs text-slate-500 mb-6">Entre com suas credenciais de acesso</p>
+            <div class="space-y-4 text-left mb-6">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Usuário</label>
+                    <input type="text" id="login-user" class="w-full border rounded-lg p-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ex: admin">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Senha</label>
+                    <input type="password" id="login-pass" class="w-full border rounded-lg p-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="••••••••">
+                </div>
+            </div>
+            <button onclick="fazerLogin()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition-all">Entrar no Sistema</button>
+        </div>
+    </div>
+
+    <!-- Cabeçalho -->
+    <header class="bg-emerald-600 text-white p-4 shadow-md sticky top-0 z-10">
+        <div class="flex justify-between items-center">
+            <h1 class="text-xl font-bold">⚽ Gestão da Pelada</h1>
+            <div class="text-right">
+                <p class="text-xs text-emerald-100">Caixa Atual</p>
+                <p class="text-lg font-bold text-white" id="header-saldo">R$ 0,00</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="p-4 max-w-md mx-auto">
+
+        <!-- ABA 1: INÍCIO (DASHBOARD) -->
+        <section id="tab-inicio" class="tab-content active">
+            <h2 class="text-lg font-bold mb-4 text-slate-700">Resumo Financeiro</h2>
+            
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="col-span-2 bg-emerald-500 text-white p-4 rounded-xl shadow-sm">
+                    <h3 class="text-emerald-100 text-sm font-semibold">Caixa Disponível</h3>
+                    <p id="dash-saldo" class="text-3xl font-black mt-1">R$ 0,00</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-slate-500 text-xs font-bold uppercase">Saídas (Total)</h3>
+                    <p id="dash-saidas" class="text-xl font-bold text-red-500 mt-1">R$ 0,00</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-slate-500 text-xs font-bold uppercase">Gasto c/ Quadra</h3>
+                    <p id="dash-quadra" class="text-xl font-bold text-orange-500 mt-1">R$ 0,00</p>
+                </div>
+            </div>
+            
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200">
+                <h3 class="text-sm font-semibold text-slate-500 mb-2">Evolução Mensal: Arrecadação vs Despesas (R$)</h3>
+                <canvas id="chartEvolucaoMensal" height="220"></canvas>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200">
+                <h3 class="text-sm font-semibold text-slate-500 mb-2">Distribuição Geral (R$)</h3>
+                <canvas id="chartFinanceiro" height="180"></canvas>
+            </div>
+        </section>
+
+        <!-- ABA 2: TERÇAS (ESCALA E PRESENÇA) -->
+        <section id="tab-tercas" class="tab-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-slate-700">Controle do Jogo</h2>
+                <div class="flex space-x-2">
+                    <select id="select-pelada" onchange="changePelada()" class="bg-white border border-slate-300 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 shadow-sm">
+                        <!-- Preenchido via JS -->
+                    </select>
+                    <button onclick="openPeladaModal()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg font-bold shadow-sm">+</button>
+                </div>
+            </div>
+
+            <div id="area-sem-pelada" class="hidden text-center py-10 bg-white rounded-xl shadow-sm border border-slate-200 mb-4">
+                <p class="text-slate-500 mb-3">Nenhuma pelada cadastrada.</p>
+                <button onclick="openPeladaModal()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold">Criar Nova Pelada</button>
+            </div>
+
+            <div id="area-listas-pelada">
+                
+                <button onclick="openPlayerModal()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl shadow-sm mb-4">+ Adicionar Jogador</button>
+
+                <!-- ABAS INTERNAS: MENSALISTAS x AVULSOS -->
+                <div class="flex space-x-2 mb-4">
+                    <button id="btn-tab-mensalistas" onclick="changeSubTab('mensalistas')" class="flex-1 py-2 px-1 bg-emerald-600 text-white rounded-lg font-bold text-xs shadow-sm text-center">
+                        Mensalistas <br><span id="badge-mensalistas" class="text-[10px] font-normal">0</span>
+                    </button>
+                    <button id="btn-tab-avulsos" onclick="changeSubTab('avulsos')" class="flex-1 py-2 px-1 bg-slate-200 text-slate-600 rounded-lg font-bold text-xs shadow-sm text-center transition-colors">
+                        Avulsos <br><span id="badge-avulsos" class="text-[10px] font-normal">0</span>
+                    </button>
+                </div>
+
+                <!-- LISTA MENSALISTAS -->
+                <div id="sub-tab-mensalistas" class="sub-tab-content active bg-white rounded-xl shadow-sm overflow-hidden mb-4 border border-slate-200">
+                    <div class="bg-blue-50 text-blue-800 p-3 border-b border-blue-100 font-semibold flex justify-between">
+                        <span>👔 Mensalistas (R$ 50)</span>
+                    </div>
+                    <ul id="lista-mensalistas" class="divide-y divide-slate-100 p-2">
+                        <!-- Preenchido via JS -->
+                    </ul>
+                </div>
+
+                <!-- LISTA AVULSOS -->
+                <div id="sub-tab-avulsos" class="sub-tab-content bg-white rounded-xl shadow-sm overflow-hidden mb-4 border border-slate-200">
+                    <div class="bg-orange-50 text-orange-800 p-3 border-b border-orange-100 font-semibold flex justify-between">
+                        <span>🏃‍♂️ Avulsos (R$ 20)</span>
+                    </div>
+                    <ul id="lista-avulsos" class="divide-y divide-slate-100 p-2">
+                        <!-- Preenchido via JS -->
+                    </ul>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <button onclick="deletePelada()" class="text-red-500 text-sm font-semibold hover:underline">Excluir dados desta data</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA 3: FINANCEIRO -->
+        <section id="tab-financeiro" class="tab-content">
+            <h2 class="text-lg font-bold mb-4 text-slate-700">Controle de Caixa</h2>
+            
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border-l-4 border-emerald-500">
+                <div class="flex justify-between mb-3">
+                    <h3 class="font-bold text-emerald-700">Receitas (Entradas)</h3>
+                    <span id="total-receitas" class="font-bold text-emerald-600">R$ 0,00</span>
+                </div>
+                <div id="lista-receitas" class="space-y-3 mb-3">
+                    <!-- Preenchido via JS -->
+                </div>
+                <button onclick="openTransModal('receita')" class="w-full border border-emerald-500 text-emerald-600 text-sm font-bold py-2 rounded-lg mt-4">+ Lançar Receita / Saldo Retroativo</button>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border-l-4 border-red-500">
+                <div class="flex justify-between mb-3">
+                    <h3 class="font-bold text-red-700">Despesas (Saídas)</h3>
+                    <span id="total-despesas" class="font-bold text-red-600">R$ 0,00</span>
+                </div>
+                <div id="lista-despesas" class="space-y-3 mb-3">
+                    <!-- Preenchido via JS -->
+                </div>
+                <button onclick="openTransModal('despesa')" class="w-full border border-red-500 text-red-600 text-sm font-bold py-2 rounded-lg">+ Lançar Despesa</button>
+            </div>
+        </section>
+
+        <!-- ABA 4: USUÁRIOS E SEGURANÇA -->
+        <section id="tab-usuarios" class="tab-content">
+            <h2 class="text-lg font-bold mb-4 text-slate-700">Acessos e Usuários</h2>
+            
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200">
+                <h3 class="font-bold text-sm text-slate-700 mb-3">Alterar Senha do Admin</h3>
+                <div class="space-y-3">
+                    <input type="password" id="nova-senha-admin" class="w-full border rounded-lg p-2 text-sm" placeholder="Nova senha do admin">
+                    <button onclick="alterarSenhaAdmin()" class="w-full bg-slate-800 text-white font-bold py-2 rounded-lg text-sm">Atualizar Senha Admin</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-sm text-slate-700">Usuários Nominais</h3>
+                    <button onclick="openUserModal()" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ Novo Usuário</button>
+                </div>
+                <ul id="lista-usuarios" class="divide-y divide-slate-100 space-y-2">
+                    <!-- Preenchido via JS -->
+                </ul>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- NAVEGAÇÃO INFERIOR -->
+    <nav class="bg-white border-t border-slate-200 fixed bottom-0 w-full z-10">
+        <ul class="flex justify-around items-center h-16 text-xs font-medium text-slate-500">
+            <li class="flex-1 text-center" onclick="changeTab('tab-inicio', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center text-emerald-600 nav-btn">
+                    <span class="text-xl mb-1">📊</span> Início
+                </button>
+            </li>
+            <li class="flex-1 text-center" onclick="changeTab('tab-tercas', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+                    <span class="text-xl mb-1">📅</span> Terças
+                </button>
+            </li>
+            <li class="flex-1 text-center" onclick="changeTab('tab-financeiro', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+                    <span class="text-xl mb-1">💰</span> Caixa
+                </button>
+            </li>
+            <li class="flex-1 text-center" onclick="changeTab('tab-usuarios', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+                    <span class="text-xl mb-1">🔒</span> Acessos
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- MODAL: NOVO USUÁRIO -->
+    <div id="modal-usuario" class="modal fixed inset-0 bg-black/60 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <h2 class="text-xl font-bold mb-4">Adicionar Usuário</h2>
+            <div class="mb-3">
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Nome de Usuário</label>
+                <input type="text" id="novo-user-nome" class="w-full border rounded-lg p-2" placeholder="Ex: peterson">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Senha</label>
+                <input type="password" id="novo-user-pass" class="w-full border rounded-lg p-2" placeholder="Senha">
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeModals()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2 rounded-lg">Cancelar</button>
+                <button onclick="salvarNovoUsuario()" class="flex-1 bg-emerald-600 text-white font-bold py-2 rounded-lg">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVA PELADA -->
+    <div id="modal-pelada" class="modal fixed inset-0 bg-black/60 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <h2 class="text-xl font-bold mb-4">Adicionar Nova Pelada</h2>
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Data do Jogo</label>
+                <input type="date" id="pelada-data" class="w-full border rounded-lg p-2 focus:ring-emerald-500 focus:border-emerald-500">
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeModals()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2 rounded-lg">Cancelar</button>
+                <button onclick="savePelada()" class="flex-1 bg-emerald-600 text-white font-bold py-2 rounded-lg">Criar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: JOGADOR -->
+    <div id="modal-jogador" class="modal fixed inset-0 bg-black/60 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <h2 id="modal-jogador-title" class="text-xl font-bold mb-4">Adicionar ao Jogo</h2>
+            <input type="hidden" id="jogador-id">
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Nome do Jogador</label>
+                <input type="text" id="jogador-nome" class="w-full border rounded-lg p-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ex: João Silva">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Tipo</label>
+                <select id="jogador-tipo" class="w-full border rounded-lg p-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="avulso">Avulso (R$ 20)</option>
+                    <option value="mensalista">Mensalista (R$ 50)</option>
+                </select>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeModals()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2 rounded-lg">Cancelar</button>
+                <button onclick="savePlayer()" class="flex-1 bg-emerald-600 text-white font-bold py-2 rounded-lg">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: TRANSAÇÃO -->
+    <div id="modal-transacao" class="modal fixed inset-0 bg-black/60 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <h2 id="modal-trans-title" class="text-xl font-bold mb-4">Nova Transação</h2>
+            <input type="hidden" id="trans-tipo">
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Descrição</label>
+                <input type="text" id="trans-desc" class="w-full border rounded-lg p-2" placeholder="Ex: Saldo em Carteira Retroativo">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Valor (R$)</label>
+                <input type="number" id="trans-valor" step="0.01" class="w-full border rounded-lg p-2" placeholder="0.00">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Mês de Referência (Opcional)</label>
+                <input type="month" id="trans-mes" class="w-full border rounded-lg p-2">
+            </div>
+            
+            <div id="area-is-quadra" class="mb-4 hidden">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="trans-quadra" class="w-5 h-5 text-emerald-600 bg-slate-100 border-slate-300 rounded">
+                    <span class="text-sm font-semibold text-slate-600">Este valor é o pagamento da Quadra</span>
+                </label>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="closeModals()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2 rounded-lg">Cancelar</button>
+                <button onclick="saveTransaction()" class="flex-1 bg-emerald-600 text-white font-bold py-2 rounded-lg">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS COM FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // CONFIGURAÇÕES DO NOVO BANCO - PELADA ÁGUA VIVA
+        const firebaseConfig = {
+            apiKey: "AIzaSyA9H7dBbiZtxLFpoNivf5cS0cS6Z1Roylw",
+            authDomain: "peladaaguaviva.firebaseapp.com",
+            projectId: "peladaaguaviva",
+            storageBucket: "peladaaguaviva.firebasestorage.app",
+            messagingSenderId: "602409920056",
+            appId: "1:602409920056:web:f49d9dc9da7eab7d8928cd",
+            measurementId: "G-2CWBMDPMM9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const VALOR_AVULSO = 20.00;
+        const VALOR_MENSALISTA = 50.00;
+
+        let data = {
+            adminPass: "1234",
+            usuarios: [
+                { id: 1, user: "admin", pass: "1234" }
+            ],
+            partidas: [],
+            transacoes: []
+        };
+
+        let partidaAtualId = null;
+        let chartFin = null, chartEvolucao = null;
+
+        window.fazerLogin = function() {
+            const u = document.getElementById('login-user').value.trim();
+            const p = document.getElementById('login-pass').value.trim();
+            
+            if(!data.usuarios) data.usuarios = [{ id: 1, user: "admin", pass: data.adminPass || "1234" }];
+
+            const userEncontrado = data.usuarios.find(item => item.user === u && item.pass === p);
+            
+            if(userEncontrado) {
+                document.getElementById('modal-login').classList.remove('active');
+            } else {
+                alert("Usuário ou senha incorretos!");
+            }
+        };
+
+        window.alterarSenhaAdmin = function() {
+            const novaSenha = document.getElementById('nova-senha-admin').value.trim();
+            if(!novaSenha) return alert("Digite a nova senha!");
+            
+            if(!data.usuarios) data.usuarios = [];
+            const adminUser = data.usuarios.find(u => u.user === 'admin');
+            if(adminUser) {
+                adminUser.pass = novaSenha;
+            } else {
+                data.usuarios.push({ id: Date.now(), user: 'admin', pass: novaSenha });
+            }
+            data.adminPass = novaSenha;
+            saveData();
+            alert("Senha do admin atualizada com sucesso!");
+            document.getElementById('nova-senha-admin').value = '';
+        };
+
+        window.openUserModal = function() {
+            document.getElementById('novo-user-nome').value = '';
+            document.getElementById('novo-user-pass').value = '';
+            document.getElementById('modal-usuario').classList.add('active');
+        };
+
+        window.salvarNovoUsuario = function() {
+            const u = document.getElementById('novo-user-nome').value.trim();
+            const p = document.getElementById('novo-user-pass').value.trim();
+            if(!u || !p) return alert("Preencha o usuário e a senha!");
+
+            if(!data.usuarios) data.usuarios = [];
+            if(data.usuarios.find(item => item.user === u)) return alert("Este usuário já existe!");
+
+            const novoId = data.usuarios.length > 0 ? Math.max(...data.usuarios.map(x => x.id)) + 1 : 1;
+            data.usuarios.push({ id: novoId, user: u, pass: p });
+            closeModals();
+            saveData();
+        };
+
+        window.deletarUsuario = function(id) {
+            if(data.usuarios.length <= 1) return alert("Você não pode excluir o último usuário restante!");
+            if(confirm("Deseja remover este usuário?")) {
+                data.usuarios = data.usuarios.filter(x => x.id !== id);
+                saveData();
+            }
+        };
+
+        window.saveData = async function() {
+            try {
+                // Salvando na nova base de dados!
+                await setDoc(doc(db, "pelada_aguaviva", "dados_gerais"), data);
+                renderAll();
+            } catch (e) {
+                console.error("Erro ao salvar no Firebase: ", e);
+            }
+        };
+
+        async function loadData() {
+            try {
+                const docRef = doc(db, "pelada_aguaviva", "dados_gerais");
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    data = docSnap.data();
+                    if(!data.usuarios) {
+                        data.usuarios = [{ id: 1, user: "admin", pass: data.adminPass || "1234" }];
+                    }
+                } else {
+                    await saveData();
+                }
+            } catch (e) {
+                console.error("Erro ao carregar do Firebase: ", e);
+            }
+            if (data.partidas && data.partidas.length > 0) {
+                partidaAtualId = data.partidas[0].id;
+            }
+            renderAll();
+        }
+
+        window.changeTab = function(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('text-emerald-600'));
+            element.querySelector('.nav-btn').classList.add('text-emerald-600');
+            
+            if(tabId === 'tab-inicio') renderDashboard();
+            if(tabId === 'tab-usuarios') renderUsuarios();
+        }
+
+        function renderUsuarios() {
+            const list = document.getElementById('lista-usuarios');
+            list.innerHTML = '';
+            if(!data.usuarios) data.usuarios = [{ id: 1, user: "admin", pass: "1234" }];
+
+            data.usuarios.forEach(u => {
+                list.innerHTML += `
+                    <li class="flex justify-between items-center p-2 bg-slate-50 rounded border border-slate-100">
+                        <span class="text-sm font-semibold text-slate-700">👤 ${u.user}</span>
+                        ${u.user !== 'admin' ? `<button onclick="deletarUsuario(${u.id})" class="text-xs text-red-500 font-bold bg-red-100 px-2 py-1 rounded">Remover</button>` : '<span class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded">Principal</span>'}
+                    </li>
+                `;
+            });
+        }
+
+        window.changeSubTab = function(tipo) {
+            document.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('btn-tab-mensalistas').className = "flex-1 py-2 px-1 bg-slate-200 text-slate-600 rounded-lg font-bold text-xs shadow-sm text-center transition-colors";
+            document.getElementById('btn-tab-avulsos').className = "flex-1 py-2 px-1 bg-slate-200 text-slate-600 rounded-lg font-bold text-xs shadow-sm text-center transition-colors";
+
+            document.getElementById('sub-tab-' + tipo).classList.add('active');
+            document.getElementById('btn-tab-' + tipo).className = "flex-1 py-2 px-1 bg-emerald-600 text-white rounded-lg font-bold text-xs shadow-sm text-center transition-colors";
+        }
+
+        function formatarMoeda(valor) {
+            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+        function formatDataBR(dataIso) {
+            const [ano, mes, dia] = dataIso.split('-');
+            return `${dia}/${mes}/${ano}`;
+        }
+
+        function calcularReceitasAutomaticas() {
+            let totalAvulsos = 0, totalMensalistas = 0;
+            data.partidas.forEach(partida => {
+                partida.jogadores.forEach(jog => {
+                    if (jog.metodoPagamento) { 
+                        const valorJog = (jog.tipo === 'avulso' ? VALOR_AVULSO : VALOR_MENSALISTA);
+                        if (jog.tipo === 'avulso') totalAvulsos += valorJog;
+                        if (jog.tipo === 'mensalista') totalMensalistas += valorJog;
+                    }
+                });
+            });
+            return { totalAvulsos, totalMensalistas };
+        }
+
+        function renderTercas() {
+            const select = document.getElementById('select-pelada');
+            const areaSem = document.getElementById('area-sem-pelada');
+            const areaListas = document.getElementById('area-listas-pelada');
+            
+            select.innerHTML = '';
+            data.partidas.sort((a,b) => new Date(b.data) - new Date(a.data));
+
+            if (data.partidas.length === 0) {
+                select.classList.add('hidden');
+                areaSem.classList.remove('hidden');
+                areaListas.classList.add('hidden');
+                return;
+            }
+
+            select.classList.remove('hidden');
+            areaSem.classList.add('hidden');
+            areaListas.classList.remove('hidden');
+
+            data.partidas.forEach(p => {
+                const isSelected = p.id === partidaAtualId ? 'selected' : '';
+                select.innerHTML += `<option value="${p.id}" ${isSelected}>${formatDataBR(p.data)}</option>`;
+            });
+
+            if (!data.partidas.find(p => p.id === partidaAtualId) && data.partidas.length > 0) {
+                partidaAtualId = data.partidas[0].id;
+            }
+
+            const partida = data.partidas.find(p => p.id === partidaAtualId);
+            if (!partida) return;
+
+            const listMensalistas = document.getElementById('lista-mensalistas');
+            const listAvulsos = document.getElementById('lista-avulsos');
+            listMensalistas.innerHTML = ''; listAvulsos.innerHTML = '';
+            
+            let cMensPres = 0, cMensAus = 0, cAvul = 0;
+
+            partida.jogadores.forEach(jog => {
+                const isPago = !!jog.metodoPagamento;
+                const selectStyle = isPago ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-500 border-slate-300';
+                const badgeFalta = !jog.presente ? `<span class="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded uppercase font-bold">Faltou</span>` : '';
+
+                const htmlRow = `
+                    <li class="p-3 bg-slate-50 rounded-lg mt-2 border border-slate-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <p class="font-bold text-slate-700 flex items-center">${jog.nome} ${badgeFalta}</p>
+                            <div class="flex space-x-1">
+                                <button onclick="editPlayer(${jog.id})" class="text-blue-500 text-xs font-semibold bg-blue-100 px-2 py-1 rounded">Editar</button>
+                                <button onclick="deletePlayer(${jog.id})" class="text-red-500 text-xs font-bold bg-red-100 px-2 py-1 rounded">X</button>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" onchange="togglePresenca(${jog.id})" ${jog.presente ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded">
+                                <span class="text-xs font-semibold text-slate-600">Jogou?</span>
+                            </label>
+                            <select onchange="changePaymentMethod(${jog.id}, this.value)" class="text-xs font-bold rounded py-1 px-2 border outline-none shadow-sm ${selectStyle}">
+                                <option value="" ${!isPago ? 'selected' : ''}>⏳ Pendente</option>
+                                <option value="pix" ${jog.metodoPagamento === 'pix' ? 'selected' : ''}>✅ Pix</option>
+                                <option value="dinheiro" ${jog.metodoPagamento === 'dinheiro' ? 'selected' : ''}>✅ Dinheiro</option>
+                            </select>
+                        </div>
+                    </li>
+                `;
+
+                if (jog.tipo === 'mensalista') {
+                    if (jog.presente) cMensPres++; else cMensAus++;
+                    listMensalistas.innerHTML += htmlRow;
+                } else {
+                    cAvul++;
+                    listAvulsos.innerHTML += htmlRow;
+                }
+            });
+
+            document.getElementById('badge-mensalistas').innerText = `${cMensPres} jogaram / ${cMensAus} faltaram`;
+            document.getElementById('badge-avulsos').innerText = `${cAvul} presentes`;
+        }
+
+        window.changePelada = function() {
+            partidaAtualId = parseInt(document.getElementById('select-pelada').value);
+            renderTercas();
+        }
+
+        window.togglePresenca = function(idJogador) {
+            const partida = data.partidas.find(p => p.id === partidaAtualId);
+            if (!partida) return;
+            const jog = partida.jogadores.find(j => j.id === idJogador);
+            if(jog) { 
+                jog.presente = !jog.presente; 
+                saveData(); 
+            }
+        }
+
+        window.changePaymentMethod = function(idJogador, method) {
+            const partida = data.partidas.find(p => p.id === partidaAtualId);
+            if (!partida) return;
+            const jog = partida.jogadores.find(j => j.id === idJogador);
+            if(jog) { jog.metodoPagamento = method; saveData(); }
+        }
+
+        function renderFinanceiro() {
+            const listRec = document.getElementById('lista-receitas');
+            const listDes = document.getElementById('lista-despesas');
+            listRec.innerHTML = ''; listDes.innerHTML = '';
+            
+            let totRecManuais = 0, totDes = 0;
+            const autoCalc = calcularReceitasAutomaticas();
+            
+            if (autoCalc.totalMensalistas > 0) {
+                listRec.innerHTML += `
+                    <div class="flex justify-between items-center border-b pb-2 bg-blue-50 p-2 rounded mb-2 border-l-4 border-blue-500">
+                        <div>
+                            <p class="font-bold text-sm text-blue-800">Mensalistas (Automático)</p>
+                            <p class="text-[10px] text-blue-600 font-semibold">Mensalidades recebidas no mês</p>
+                        </div>
+                        <span class="font-black text-blue-700">${formatarMoeda(autoCalc.totalMensalistas)}</span>
+                    </div>`;
+            }
+
+            if (autoCalc.totalAvulsos > 0) {
+                listRec.innerHTML += `
+                    <div class="flex justify-between items-center border-b pb-2 bg-orange-50 p-2 rounded mb-2 border-l-4 border-orange-500">
+                        <div>
+                            <p class="font-bold text-sm text-orange-800">Avulsos (Automático)</p>
+                            <p class="text-[10px] text-orange-600 font-semibold">Avulsos recebidos no mês</p>
+                        </div>
+                        <span class="font-black text-orange-700">${formatarMoeda(autoCalc.totalAvulsos)}</span>
+                    </div>`;
+            }
+
+            data.transacoes.forEach(t => {
+                const valorF = formatarMoeda(parseFloat(t.valor));
+                const badgeQuadra = t.isQuadra ? `<span class="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded ml-2 uppercase">Quadra</span>` : '';
+                const refMes = t.mesRef ? ` <span class="text-slate-400 text-xs">(${t.mesRef})</span>` : '';
+
+                if (t.tipo === 'receita') {
+                    totRecManuais += parseFloat(t.valor);
+                    listRec.innerHTML += `
+                        <div class="flex justify-between items-center border-b pb-2 mt-2">
+                            <div>
+                                <p class="font-semibold text-sm">${t.desc} ${refMes}</p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="font-bold text-emerald-600">${valorF}</span>
+                                <button onclick="deleteTransaction(${t.id})" class="text-xs text-red-500 font-bold bg-slate-100 px-2 py-1 rounded">X</button>
+                            </div>
+                        </div>`;
+                } else {
+                    totDes += parseFloat(t.valor);
+                    listDes.innerHTML += `
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <p class="font-semibold text-sm flex items-center">${t.desc} ${refMes} ${badgeQuadra}</p>
+                            <div class="flex items-center space-x-3">
+                                <span class="font-bold text-red-600">- ${valorF}</span>
+                                <button onclick="deleteTransaction(${t.id})" class="text-xs text-red-500 font-bold bg-slate-100 px-2 py-1 rounded">X</button>
+                            </div>
+                        </div>`;
+                }
+            });
+
+            const totReceitasGeral = totRecManuais + autoCalc.totalAvulsos + autoCalc.totalMensalistas;
+            document.getElementById('total-receitas').innerText = formatarMoeda(totReceitasGeral);
+            document.getElementById('total-despesas').innerText = formatarMoeda(totDes);
+        }
+
+        function renderDashboard() {
+            let totRecManuais = 0, totDes = 0, totQuadra = 0;
+            
+            data.transacoes.forEach(t => {
+                if (t.tipo === 'receita') {
+                    totRecManuais += parseFloat(t.valor);
+                }
+                if (t.tipo === 'despesa') {
+                    totDes += parseFloat(t.valor);
+                    if(t.isQuadra) totQuadra += parseFloat(t.valor);
+                }
+            });
+
+            const autoCalc = calcularReceitasAutomaticas();
+            const totReceitasGeral = totRecManuais + autoCalc.totalAvulsos + autoCalc.totalMensalistas;
+            const saldo = totReceitasGeral - totDes;
+            
+            document.getElementById('header-saldo').innerText = formatarMoeda(saldo);
+            document.getElementById('dash-saldo').innerText = formatarMoeda(saldo);
+            document.getElementById('dash-saidas').innerText = formatarMoeda(totDes);
+            document.getElementById('dash-quadra').innerText = formatarMoeda(totQuadra);
+
+            const mesesMap = {};
+            
+            data.partidas.forEach(p => {
+                const mesAno = p.data.substring(0, 7);
+                if (!mesesMap[mesAno]) mesesMap[mesAno] = { receitas: 0, despesas: 0 };
+                
+                p.jogadores.forEach(j => {
+                    if (j.metodoPagamento) {
+                        mesesMap[mesAno].receitas += (j.tipo === 'avulso' ? VALOR_AVULSO : VALOR_MENSALISTA);
+                    }
+                });
+            });
+
+            data.transacoes.forEach(t => {
+                const mesAno = t.mesRef || new Date().toISOString().substring(0, 7);
+                if (!mesesMap[mesAno]) mesesMap[mesAno] = { receitas: 0, despesas: 0 };
+                if (t.tipo === 'receita') {
+                    mesesMap[mesAno].receitas += parseFloat(t.valor);
+                }
+                if (t.tipo === 'despesa') {
+                    mesesMap[mesAno].despesas += parseFloat(t.valor);
+                }
+            });
+
+            const mesesOrdenados = Object.keys(mesesMap).sort();
+            const labelsMeses = mesesOrdenados.map(m => {
+                const [ano, mes] = m.split('-');
+                return `${mes}/${ano}`;
+            });
+            const valoresReceitasMes = mesesOrdenados.map(m => mesesMap[m].receitas);
+            const valoresDespesasMes = mesesOrdenados.map(m => mesesMap[m].despesas);
+
+            if (chartEvolucao) chartEvolucao.destroy();
+            const ctxEvolucao = document.getElementById('chartEvolucaoMensal').getContext('2d');
+            chartEvolucao = new Chart(ctxEvolucao, {
+                type: 'bar',
+                data: {
+                    labels: labelsMeses.length > 0 ? labelsMeses : ['Atual'],
+                    datasets: [
+                        {
+                            label: 'Arrecadação',
+                            data: valoresReceitasMes.length > 0 ? valoresReceitasMes : [totReceitasGeral],
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Despesas',
+                            data: valoresDespesasMes.length > 0 ? valoresDespesasMes : [totDes],
+                            backgroundColor: '#ef4444',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: { 
+                    responsive: true, 
+                    plugins: { legend: { position: 'bottom' } }, 
+                    scales: { y: { beginAtZero: true } } 
+                }
+            });
+
+            if (chartFin) chartFin.destroy();
+            const ctxFin = document.getElementById('chartFinanceiro').getContext('2d');
+            chartFin = new Chart(ctxFin, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Entradas', 'Saídas', 'Gasto Quadra'],
+                    datasets: [{
+                        data: [totReceitasGeral, totDes, totQuadra],
+                        backgroundColor: ['#10b981', '#ef4444', '#f97316']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        function renderAll() {
+            renderTercas();
+            renderFinanceiro();
+            renderDashboard();
+            renderUsuarios();
+        }
+
+        window.openPeladaModal = function() {
+            document.getElementById('pelada-data').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modal-pelada').classList.add('active');
+        }
+
+        window.savePelada = function() {
+            const dataInput = document.getElementById('pelada-data').value;
+            if(!dataInput) return alert('Selecione uma data!');
+            if(data.partidas.find(p => p.data === dataInput)) return alert('Já existe esta data!');
+
+            const novoId = data.partidas.length > 0 ? Math.max(...data.partidas.map(p => p.id)) + 1 : 1;
+            data.partidas.push({ id: novoId, data: dataInput, jogadores: [] });
+            partidaAtualId = novoId; 
+            closeModals();
+            saveData();
+        }
+
+        window.deletePelada = function() {
+            if(confirm('Apagar os registros DESTA DATA de pelada?')) {
+                data.partidas = data.partidas.filter(p => p.id !== partidaAtualId);
+                partidaAtualId = null;
+                saveData();
+            }
+        }
+
+        window.openPlayerModal = function() {
+            document.getElementById('jogador-id').value = '';
+            document.getElementById('jogador-nome').value = '';
+            document.getElementById('jogador-tipo').value = 'avulso';
+            document.getElementById('modal-jogador-title').innerText = 'Adicionar Jogador no Jogo';
+            document.getElementById('modal-jogador').classList.add('active');
+        }
+
+        window.editPlayer = function(id) {
+            const partida = data.partidas.find(p => p.id === partidaAtualId);
+            const jog = partida.jogadores.find(j => j.id === id);
+            document.getElementById('jogador-id').value = jog.id;
+            document.getElementById('jogador-nome').value = jog.nome;
+            document.getElementById('jogador-tipo').value = jog.tipo;
+            document.getElementById('modal-jogador-title').innerText = 'Editar Jogador';
+            document.getElementById('modal-jogador').classList.add('active');
+        }
+
+        window.savePlayer = function() {
+            const id = document.getElementById('jogador-id').value;
+            const nome = document.getElementById('jogador-nome').value;
+            const tipo = document.getElementById('jogador-tipo').value;
+            if(!nome) return alert("Digite o nome!");
+
+            const partida = data.partidas.find(p => p.id === partidaAtualId);
+
+            if (id) {
+                const jog = partida.jogadores.find(j => j.id == id);
+                jog.nome = nome; jog.tipo = tipo;
+            } else {
+                const novoId = partida.jogadores.length > 0 ? Math.max(...partida.jogadores.map(j => j.id)) + 1 : 1;
+                partida.jogadores.push({ id: novoId, nome, tipo, metodoPagamento: '', presente: true });
+            }
+            closeModals();
+            saveData();
+        }
+
+        window.deletePlayer = function(idJogador) {
+            if(confirm('Remover jogador?')) {
+                const partida = data.partidas.find(p => p.id === partidaAtualId);
+                partida.jogadores = partida.jogadores.filter(j => j.id !== idJogador);
+                saveData();
+            }
+        }
+
+        window.deleteTransaction = function(id) {
+            if(confirm('Remover transação?')) {
+                data.transacoes = data.transacoes.filter(t => t.id !== id);
+                saveData();
+            }
+        }
+
+        window.openTransModal = function(tipo) {
+            document.getElementById('trans-tipo').value = tipo;
+            document.getElementById('trans-desc').value = '';
+            document.getElementById('trans-valor').value = '';
+            document.getElementById('trans-mes').value = new Date().toISOString().substring(0, 7);
+            
+            const checkQuadra = document.getElementById('area-is-quadra');
+            document.getElementById('trans-quadra').checked = false;
+
+            if (tipo === 'despesa') {
+                checkQuadra.classList.remove('hidden');
+            } else {
+                checkQuadra.classList.add('hidden');
+            }
+
+            document.getElementById('modal-trans-title').innerText = tipo === 'receita' ? 'Lançar Receita / Saldo Retroativo' : 'Lançar Despesa';
+            document.getElementById('modal-transacao').classList.add('active');
+        }
+
+        window.saveTransaction = function() {
+            const desc = document.getElementById('trans-desc').value;
+            const valor = parseFloat(document.getElementById('trans-valor').value);
+            const tipo = document.getElementById('trans-tipo').value;
+            const mesRef = document.getElementById('trans-mes').value;
+            const isQuadra = tipo === 'despesa' ? document.getElementById('trans-quadra').checked : false;
+
+            if(!desc || isNaN(valor) || valor <= 0) return alert("Preencha corretamente!");
+
+            const novoId = data.transacoes.length > 0 ? Math.max(...data.transacoes.map(t => t.id)) + 1 : 1;
+            data.transacoes.push({ id: novoId, desc, valor, tipo, mesRef, isQuadra });
+            closeModals();
+            saveData();
+        }
+
+        window.closeModals = function() {
+            document.querySelectorAll('.modal').forEach(m => {
+                if(m.id !== 'modal-login') m.classList.remove('active');
+            });
+        }
+
+        window.onload = function() {
+            loadData();
+        };
+    </script>
+</body>
+</html>

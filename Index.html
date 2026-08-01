@@ -115,7 +115,7 @@
                 <!-- LISTA MENSALISTAS -->
                 <div id="sub-tab-mensalistas" class="sub-tab-content active bg-white rounded-xl shadow-sm overflow-hidden mb-4 border border-slate-200">
                     <div class="bg-blue-50 text-blue-800 p-3 border-b border-blue-100 font-semibold flex justify-between">
-                        <span>👔 Mensalistas (R$ 50)</span>
+                        <span>👔 Mensalistas</span>
                     </div>
                     <ul id="lista-mensalistas" class="divide-y divide-slate-100 p-2">
                         <!-- Preenchido via JS -->
@@ -263,7 +263,7 @@
                 <label class="block text-sm font-semibold text-slate-600 mb-1">Tipo</label>
                 <select id="jogador-tipo" class="w-full border rounded-lg p-2 focus:ring-emerald-500 focus:border-emerald-500">
                     <option value="avulso">Avulso (R$ 20)</option>
-                    <option value="mensalista">Mensalista (R$ 50)</option>
+                    <option value="mensalista">Mensalista</option>
                 </select>
             </div>
             <div class="flex space-x-3">
@@ -310,7 +310,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // CONFIGURAÇÕES DO NOVO BANCO - PELADA ÁGUA VIVA
         const firebaseConfig = {
             apiKey: "AIzaSyA9H7dBbiZtxLFpoNivf5cS0cS6Z1Roylw",
             authDomain: "peladaaguaviva.firebaseapp.com",
@@ -325,7 +324,7 @@
         const db = getFirestore(app);
 
         const VALOR_AVULSO = 20.00;
-        const VALOR_MENSALISTA = 50.00;
+        const VALOR_PADRAO_MENSALISTA = 60.00;
 
         let data = {
             adminPass: "1234",
@@ -401,7 +400,6 @@
 
         window.saveData = async function() {
             try {
-                // Salvando na nova base de dados!
                 await setDoc(doc(db, "pelada_aguaviva", "dados_gerais"), data);
                 renderAll();
             } catch (e) {
@@ -478,14 +476,27 @@
             data.partidas.forEach(partida => {
                 partida.jogadores.forEach(jog => {
                     if (jog.metodoPagamento) { 
-                        const valorJog = (jog.tipo === 'avulso' ? VALOR_AVULSO : VALOR_MENSALISTA);
-                        if (jog.tipo === 'avulso') totalAvulsos += valorJog;
-                        if (jog.tipo === 'mensalista') totalMensalistas += valorJog;
+                        if (jog.tipo === 'avulso') {
+                            totalAvulsos += VALOR_AVULSO;
+                        } else if (jog.tipo === 'mensalista') {
+                            const valorMensalista = jog.valorCustom !== undefined && jog.valorCustom !== '' ? parseFloat(jog.valorCustom) : VALOR_PADRAO_MENSALISTA;
+                            totalMensalistas += valorMensalista;
+                        }
                     }
                 });
             });
             return { totalAvulsos, totalMensalistas };
         }
+
+        window.mudarValorMensalista = function(idJogador, novoValor) {
+            const partida = data.partidas.find(p => p.id === partidaAtualId);
+            if (!partida) return;
+            const jog = partida.jogadores.find(j => j.id === idJogador);
+            if (jog) {
+                jog.valorCustom = novoValor === '' ? '' : parseFloat(novoValor);
+                saveData();
+            }
+        };
 
         function renderTercas() {
             const select = document.getElementById('select-pelada');
@@ -529,35 +540,60 @@
                 const selectStyle = isPago ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-500 border-slate-300';
                 const badgeFalta = !jog.presente ? `<span class="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded uppercase font-bold">Faltou</span>` : '';
 
-                const htmlRow = `
-                    <li class="p-3 bg-slate-50 rounded-lg mt-2 border border-slate-200">
-                        <div class="flex justify-between items-center mb-3">
-                            <p class="font-bold text-slate-700 flex items-center">${jog.nome} ${badgeFalta}</p>
-                            <div class="flex space-x-1">
-                                <button onclick="editPlayer(${jog.id})" class="text-blue-500 text-xs font-semibold bg-blue-100 px-2 py-1 rounded">Editar</button>
-                                <button onclick="deletePlayer(${jog.id})" class="text-red-500 text-xs font-bold bg-red-100 px-2 py-1 rounded">X</button>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100">
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" onchange="togglePresenca(${jog.id})" ${jog.presente ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded">
-                                <span class="text-xs font-semibold text-slate-600">Jogou?</span>
-                            </label>
-                            <select onchange="changePaymentMethod(${jog.id}, this.value)" class="text-xs font-bold rounded py-1 px-2 border outline-none shadow-sm ${selectStyle}">
-                                <option value="" ${!isPago ? 'selected' : ''}>⏳ Pendente</option>
-                                <option value="pix" ${jog.metodoPagamento === 'pix' ? 'selected' : ''}>✅ Pix</option>
-                                <option value="dinheiro" ${jog.metodoPagamento === 'dinheiro' ? 'selected' : ''}>✅ Dinheiro</option>
-                            </select>
-                        </div>
-                    </li>
-                `;
-
                 if (jog.tipo === 'mensalista') {
                     if (jog.presente) cMensPres++; else cMensAus++;
-                    listMensalistas.innerHTML += htmlRow;
+                    const valorAtual = jog.valorCustom !== undefined && jog.valorCustom !== '' ? jog.valorCustom : VALOR_PADRAO_MENSALISTA;
+                    
+                    listMensalistas.innerHTML += `
+                        <li class="p-3 bg-slate-50 rounded-lg mt-2 border border-slate-200">
+                            <div class="flex justify-between items-center mb-2">
+                                <p class="font-bold text-slate-700 flex items-center">${jog.nome} ${badgeFalta}</p>
+                                <div class="flex space-x-1">
+                                    <button onclick="editPlayer(${jog.id})" class="text-blue-500 text-xs font-semibold bg-blue-100 px-2 py-1 rounded">Editar</button>
+                                    <button onclick="deletePlayer(${jog.id})" class="text-red-500 text-xs font-bold bg-red-100 px-2 py-1 rounded">X</button>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between mb-3 bg-white p-2 rounded border border-slate-100">
+                                <span class="text-xs font-semibold text-slate-600">Valor (R$):</span>
+                                <input type="number" step="0.01" value="${valorAtual}" onchange="mudarValorMensalista(${jog.id}, this.value)" class="w-24 border rounded p-1 text-xs font-bold text-right">
+                            </div>
+                            <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" onchange="togglePresenca(${jog.id})" ${jog.presente ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded">
+                                    <span class="text-xs font-semibold text-slate-600">Jogou?</span>
+                                </label>
+                                <select onchange="changePaymentMethod(${jog.id}, this.value)" class="text-xs font-bold rounded py-1 px-2 border outline-none shadow-sm ${selectStyle}">
+                                    <option value="" ${!isPago ? 'selected' : ''}>⏳ Pendente</option>
+                                    <option value="pix" ${jog.metodoPagamento === 'pix' ? 'selected' : ''}>✅ Pix</option>
+                                    <option value="dinheiro" ${jog.metodoPagamento === 'dinheiro' ? 'selected' : ''}>✅ Dinheiro</option>
+                                </select>
+                            </div>
+                        </li>
+                    `;
                 } else {
                     cAvul++;
-                    listAvulsos.innerHTML += htmlRow;
+                    listAvulsos.innerHTML += `
+                        <li class="p-3 bg-slate-50 rounded-lg mt-2 border border-slate-200">
+                            <div class="flex justify-between items-center mb-3">
+                                <p class="font-bold text-slate-700 flex items-center">${jog.nome} ${badgeFalta}</p>
+                                <div class="flex space-x-1">
+                                    <button onclick="editPlayer(${jog.id})" class="text-blue-500 text-xs font-semibold bg-blue-100 px-2 py-1 rounded">Editar</button>
+                                    <button onclick="deletePlayer(${jog.id})" class="text-red-500 text-xs font-bold bg-red-100 px-2 py-1 rounded">X</button>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" onchange="togglePresenca(${jog.id})" ${jog.presente ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded">
+                                    <span class="text-xs font-semibold text-slate-600">Jogou?</span>
+                                </label>
+                                <select onchange="changePaymentMethod(${jog.id}, this.value)" class="text-xs font-bold rounded py-1 px-2 border outline-none shadow-sm ${selectStyle}">
+                                    <option value="" ${!isPago ? 'selected' : ''}>⏳ Pendente</option>
+                                    <option value="pix" ${jog.metodoPagamento === 'pix' ? 'selected' : ''}>✅ Pix</option>
+                                    <option value="dinheiro" ${jog.metodoPagamento === 'dinheiro' ? 'selected' : ''}>✅ Dinheiro</option>
+                                </select>
+                            </div>
+                        </li>
+                    `;
                 }
             });
 
@@ -682,7 +718,12 @@
                 
                 p.jogadores.forEach(j => {
                     if (j.metodoPagamento) {
-                        mesesMap[mesAno].receitas += (j.tipo === 'avulso' ? VALOR_AVULSO : VALOR_MENSALISTA);
+                        if (j.tipo === 'avulso') {
+                            mesesMap[mesAno].receitas += VALOR_AVULSO;
+                        } else if (j.tipo === 'mensalista') {
+                            const val = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_MENSALISTA;
+                            mesesMap[mesAno].receitas += val;
+                        }
                     }
                 });
             });
@@ -812,7 +853,7 @@
                 jog.nome = nome; jog.tipo = tipo;
             } else {
                 const novoId = partida.jogadores.length > 0 ? Math.max(...partida.jogadores.map(j => j.id)) + 1 : 1;
-                partida.jogadores.push({ id: novoId, nome, tipo, metodoPagamento: '', presente: true });
+                partida.jogadores.push({ id: novoId, nome, tipo, valorCustom: tipo === 'mensalista' ? VALOR_PADRAO_MENSALISTA : '', metodoPagamento: '', presente: true });
             }
             closeModals();
             saveData();

@@ -14,6 +14,9 @@
         body { padding-bottom: 5rem; }
         .modal { display: none; }
         .modal.active { display: flex; }
+        /* Esconder scrollbar na navegação para ficar mais bonito */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans">
@@ -251,43 +254,77 @@
             </div>
         </section>
 
+        <!-- ABA 8: RELATÓRIOS (NOVO) -->
+        <section id="tab-relatorios" class="tab-content">
+            <h2 class="text-lg font-bold mb-4 text-slate-700">Relatórios e Estatísticas</h2>
+            
+            <!-- Alerta de Avulsos -->
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200 border-l-4 border-l-orange-500">
+                <h3 class="font-bold text-sm text-slate-700 mb-1 flex items-center">🚨 Alerta: Avulsos "Gastões"</h3>
+                <p class="text-xs text-slate-500 mb-3 leading-tight">Avulsos que gastaram mais de R$ 60,00 num único mês (financeiramente é melhor virarem mensalistas).</p>
+                <div id="lista-avulsos-gastoes" class="space-y-2">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+
+            <!-- Frequência Mensalistas -->
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200 border-l-4 border-l-blue-500">
+                <h3 class="font-bold text-sm text-slate-700 mb-1 flex items-center">📊 Regularidade dos Mensalistas</h3>
+                <p class="text-xs text-slate-500 mb-3 leading-tight">Média de frequência com base em todo o histórico de jogos.</p>
+                <ul id="lista-frequencia-mensalistas" class="divide-y divide-slate-100">
+                    <!-- Preenchido via JS -->
+                </ul>
+            </div>
+
+            <!-- Gráfico Evolução Presença -->
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200">
+                <h3 class="font-bold text-sm text-slate-700 mb-3">Evolução: Presentes x Ausentes (Últimos jogos)</h3>
+                <canvas id="chartFrequencia" height="200"></canvas>
+            </div>
+        </section>
+
     </main>
 
     <!-- NAVEGAÇÃO INFERIOR -->
-    <nav class="bg-white border-t border-slate-200 fixed bottom-0 w-full z-10 overflow-x-auto">
-        <ul class="flex justify-around items-center h-16 text-[10px] font-medium text-slate-500 min-w-full">
-            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-inicio', this)">
-                <button class="w-full h-full flex flex-col items-center justify-center text-emerald-600 nav-btn">
+    <nav class="bg-white border-t border-slate-200 fixed bottom-0 w-full z-10 overflow-x-auto no-scrollbar shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <ul class="flex items-center h-16 text-[10px] font-medium text-slate-500 w-max min-w-full px-2 space-x-2">
+            <li class="flex-1 min-w-[64px] text-center cursor-pointer" onclick="changeTab('tab-inicio', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center text-emerald-600 nav-btn py-1 rounded-lg hover:bg-slate-50 transition-colors">
                     <span class="text-base mb-0.5">📊</span> Início
                 </button>
             </li>
-            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-tercas', this)">
-                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+            <li class="flex-1 min-w-[64px] text-center cursor-pointer" onclick="changeTab('tab-tercas', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn py-1 rounded-lg hover:bg-slate-50 transition-colors">
                     <span class="text-base mb-0.5">📅</span> Terças
                 </button>
             </li>
-            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-sorteio', this)">
-                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+            <li class="flex-1 min-w-[64px] text-center cursor-pointer" onclick="changeTab('tab-sorteio', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn py-1 rounded-lg hover:bg-slate-50 transition-colors">
                     <span class="text-base mb-0.5">🎲</span> Sorteio
                 </button>
             </li>
-            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-financeiro', this)">
-                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+            <li class="flex-1 min-w-[64px] text-center cursor-pointer" onclick="changeTab('tab-financeiro', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn py-1 rounded-lg hover:bg-slate-50 transition-colors">
                     <span class="text-base mb-0.5">💰</span> Caixa
                 </button>
             </li>
-            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-comprovantes', this)">
-                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+            <li class="flex-1 min-w-[64px] text-center cursor-pointer" onclick="changeTab('tab-relatorios', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn py-1 rounded-lg hover:bg-slate-50 transition-colors">
+                    <span class="text-base mb-0.5">📈</span> Relatórios
+                </button>
+            </li>
+            <li class="flex-1 min-w-[64px] text-center cursor-pointer" onclick="changeTab('tab-comprovantes', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn py-1 rounded-lg hover:bg-slate-50 transition-colors">
                     <span class="text-base mb-0.5">🧾</span> Recibos
                 </button>
             </li>
-            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-midia', this)">
-                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+            <li class="flex-1 min-w-[64px] text-center cursor-pointer" onclick="changeTab('tab-midia', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn py-1 rounded-lg hover:bg-slate-50 transition-colors">
                     <span class="text-base mb-0.5">📸</span> Mídia
                 </button>
             </li>
-            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-usuarios', this)">
-                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+            <li class="flex-1 min-w-[64px] text-center cursor-pointer" onclick="changeTab('tab-usuarios', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn py-1 rounded-lg hover:bg-slate-50 transition-colors">
                     <span class="text-base mb-0.5">🔒</span> Acessos
                 </button>
             </li>
@@ -416,7 +453,7 @@
         };
 
         let partidaAtualId = null;
-        let chartFin = null, chartEvolucao = null;
+        let chartFin = null, chartEvolucao = null, chartFreq = null;
         let numerosDisponiveis = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
         let girandoSorteio = false;
 
@@ -524,13 +561,14 @@
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('text-emerald-600'));
-            element.querySelector('.nav-btn').classList.add('text-emerald-600');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('text-emerald-600', 'bg-emerald-50'));
+            element.querySelector('.nav-btn').classList.add('text-emerald-600', 'bg-emerald-50');
             
             if(tabId === 'tab-inicio') renderDashboard();
             if(tabId === 'tab-usuarios') renderUsuarios();
             if(tabId === 'tab-comprovantes') renderComprovantes();
             if(tabId === 'tab-midia') renderMidia();
+            if(tabId === 'tab-relatorios') renderRelatorios();
         }
 
         function renderUsuarios() {
@@ -561,6 +599,7 @@
             return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
         function formatDataBR(dataIso) {
+            if(!dataIso) return '';
             const [ano, mes, dia] = dataIso.split('-');
             return `${dia}/${mes}/${ano}`;
         }
@@ -569,7 +608,6 @@
             let totalAvulsos = 0, totalMensalistas = 0;
             data.partidas.forEach(partida => {
                 partida.jogadores.forEach(jog => {
-                    // Soma apenas se tiver método de pagamento selecionado E não for "isento"
                     if (jog.metodoPagamento && jog.metodoPagamento !== 'isento') { 
                         if (jog.tipo === 'avulso') {
                             const valorAvulso = jog.valorCustom !== undefined && jog.valorCustom !== '' ? parseFloat(jog.valorCustom) : VALOR_PADRAO_AVULSO;
@@ -635,74 +673,46 @@
                 const isPago = jog.metodoPagamento === 'pix' || jog.metodoPagamento === 'dinheiro';
                 const isIsento = jog.metodoPagamento === 'isento';
                 
-                let selectStyle = 'bg-slate-100 text-slate-500 border-slate-300'; // pendente (padrão)
+                let selectStyle = 'bg-slate-100 text-slate-500 border-slate-300';
                 if (isPago) selectStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300';
                 if (isIsento) selectStyle = 'bg-blue-100 text-blue-800 border-blue-300';
 
                 const badgeFalta = !jog.presente ? `<span class="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded uppercase font-bold">Faltou</span>` : '';
 
+                let innerHTMLJogador = `
+                    <li class="p-3 bg-slate-50 rounded-lg mt-2 border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="font-bold text-slate-700 flex items-center">${jog.nome} ${badgeFalta}</p>
+                            <div class="flex space-x-1">
+                                <button onclick="editPlayer(${jog.id})" class="text-blue-500 text-xs font-semibold bg-blue-100 px-2 py-1 rounded">Editar</button>
+                                <button onclick="deletePlayer(${jog.id})" class="text-red-500 text-xs font-bold bg-red-100 px-2 py-1 rounded">X</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between mb-3 bg-white p-2 rounded border border-slate-100">
+                            <span class="text-xs font-semibold text-slate-600">Valor (R$):</span>
+                            <input type="number" step="0.01" value="${jog.valorCustom !== undefined && jog.valorCustom !== '' ? jog.valorCustom : (jog.tipo === 'mensalista' ? VALOR_PADRAO_MENSALISTA : VALOR_PADRAO_AVULSO)}" onchange="mudarValorJogador(${jog.id}, this.value)" class="w-24 border rounded p-1 text-xs font-bold text-right focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" onchange="togglePresenca(${jog.id})" ${jog.presente ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded">
+                                <span class="text-xs font-semibold text-slate-600">Jogou?</span>
+                            </label>
+                            <select onchange="changePaymentMethod(${jog.id}, this.value)" class="text-xs font-bold rounded py-1 px-2 border outline-none shadow-sm transition-colors ${selectStyle}">
+                                <option value="" ${!jog.metodoPagamento ? 'selected' : ''}>⏳ Pendente</option>
+                                <option value="pix" ${jog.metodoPagamento === 'pix' ? 'selected' : ''}>✅ Pix</option>
+                                <option value="dinheiro" ${jog.metodoPagamento === 'dinheiro' ? 'selected' : ''}>✅ Dinheiro</option>
+                                <option value="isento" ${jog.metodoPagamento === 'isento' ? 'selected' : ''}>🆓 Isento</option>
+                            </select>
+                        </div>
+                    </li>
+                `;
+
                 if (jog.tipo === 'mensalista') {
                     if (jog.presente) cMensPres++; else cMensAus++;
-                    const valorAtual = jog.valorCustom !== undefined && jog.valorCustom !== '' ? jog.valorCustom : VALOR_PADRAO_MENSALISTA;
-                    
-                    listMensalistas.innerHTML += `
-                        <li class="p-3 bg-slate-50 rounded-lg mt-2 border border-slate-200">
-                            <div class="flex justify-between items-center mb-2">
-                                <p class="font-bold text-slate-700 flex items-center">${jog.nome} ${badgeFalta}</p>
-                                <div class="flex space-x-1">
-                                    <button onclick="editPlayer(${jog.id})" class="text-blue-500 text-xs font-semibold bg-blue-100 px-2 py-1 rounded">Editar</button>
-                                    <button onclick="deletePlayer(${jog.id})" class="text-red-500 text-xs font-bold bg-red-100 px-2 py-1 rounded">X</button>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between mb-3 bg-white p-2 rounded border border-slate-100">
-                                <span class="text-xs font-semibold text-slate-600">Valor (R$):</span>
-                                <input type="number" step="0.01" value="${valorAtual}" onchange="mudarValorJogador(${jog.id}, this.value)" class="w-24 border rounded p-1 text-xs font-bold text-right">
-                            </div>
-                            <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100">
-                                <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="checkbox" onchange="togglePresenca(${jog.id})" ${jog.presente ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded">
-                                    <span class="text-xs font-semibold text-slate-600">Jogou?</span>
-                                </label>
-                                <select onchange="changePaymentMethod(${jog.id}, this.value)" class="text-xs font-bold rounded py-1 px-2 border outline-none shadow-sm ${selectStyle}">
-                                    <option value="" ${!jog.metodoPagamento ? 'selected' : ''}>⏳ Pendente</option>
-                                    <option value="pix" ${jog.metodoPagamento === 'pix' ? 'selected' : ''}>✅ Pix</option>
-                                    <option value="dinheiro" ${jog.metodoPagamento === 'dinheiro' ? 'selected' : ''}>✅ Dinheiro</option>
-                                    <option value="isento" ${jog.metodoPagamento === 'isento' ? 'selected' : ''}>🆓 Isento</option>
-                                </select>
-                            </div>
-                        </li>
-                    `;
+                    listMensalistas.innerHTML += innerHTMLJogador;
                 } else {
                     cAvul++;
-                    const valorAtualAvulso = jog.valorCustom !== undefined && jog.valorCustom !== '' ? jog.valorCustom : VALOR_PADRAO_AVULSO;
-
-                    listAvulsos.innerHTML += `
-                        <li class="p-3 bg-slate-50 rounded-lg mt-2 border border-slate-200">
-                            <div class="flex justify-between items-center mb-2">
-                                <p class="font-bold text-slate-700 flex items-center">${jog.nome} ${badgeFalta}</p>
-                                <div class="flex space-x-1">
-                                    <button onclick="editPlayer(${jog.id})" class="text-blue-500 text-xs font-semibold bg-blue-100 px-2 py-1 rounded">Editar</button>
-                                    <button onclick="deletePlayer(${jog.id})" class="text-red-500 text-xs font-bold bg-red-100 px-2 py-1 rounded">X</button>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between mb-3 bg-white p-2 rounded border border-slate-100">
-                                <span class="text-xs font-semibold text-slate-600">Valor (R$):</span>
-                                <input type="number" step="0.01" value="${valorAtualAvulso}" onchange="mudarValorJogador(${jog.id}, this.value)" class="w-24 border rounded p-1 text-xs font-bold text-right">
-                            </div>
-                            <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100">
-                                <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="checkbox" onchange="togglePresenca(${jog.id})" ${jog.presente ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded">
-                                    <span class="text-xs font-semibold text-slate-600">Jogou?</span>
-                                </label>
-                                <select onchange="changePaymentMethod(${jog.id}, this.value)" class="text-xs font-bold rounded py-1 px-2 border outline-none shadow-sm ${selectStyle}">
-                                    <option value="" ${!jog.metodoPagamento ? 'selected' : ''}>⏳ Pendente</option>
-                                    <option value="pix" ${jog.metodoPagamento === 'pix' ? 'selected' : ''}>✅ Pix</option>
-                                    <option value="dinheiro" ${jog.metodoPagamento === 'dinheiro' ? 'selected' : ''}>✅ Dinheiro</option>
-                                    <option value="isento" ${jog.metodoPagamento === 'isento' ? 'selected' : ''}>🆓 Isento</option>
-                                </select>
-                            </div>
-                        </li>
-                    `;
+                    listAvulsos.innerHTML += innerHTMLJogador;
                 }
             });
 
@@ -732,7 +742,7 @@
             if(jog) { jog.metodoPagamento = method; saveData(); }
         }
 
-        // SORTEIO DE NÚMEROS (GIRADOR ALEATÓRIO)
+        // SORTEIO
         let intervaloGiro = null;
         window.girarNumero = function() {
             if (numerosDisponiveis.length === 0) {
@@ -784,7 +794,7 @@
             document.getElementById('lista-nums-disp').innerHTML = texto;
         }
 
-        // COMPROVANTES COM UPLOAD REAL
+        // UPLOAD COMPROVANTES E MÍDIA
         window.salvarComprovante = function() {
             const desc = document.getElementById('comp-desc').value.trim();
             const fileInput = document.getElementById('comp-file');
@@ -832,7 +842,6 @@
             });
         }
 
-        // MÍDIA COM UPLOAD REAL
         window.salvarMidia = function() {
             const desc = document.getElementById('midia-desc').value.trim();
             const fileInput = document.getElementById('midia-file');
@@ -883,6 +892,7 @@
             });
         }
 
+        // FINANCEIRO E DASHBOARD
         function renderFinanceiro() {
             const listRec = document.getElementById('lista-receitas');
             const listDes = document.getElementById('lista-despesas');
@@ -893,7 +903,7 @@
             
             if (autoCalc.totalMensalistas > 0) {
                 listRec.innerHTML += `
-                    <div class="flex justify-between items-center border-b pb-2 bg-blue-50 p-2 rounded mb-2 border-l-4 border-blue-500">
+                    <div class="flex justify-between items-center border-b pb-2 bg-blue-50 p-2 rounded mb-2 border-l-4 border-blue-500 shadow-sm">
                         <div>
                             <p class="font-bold text-sm text-blue-800">Mensalistas (Automático)</p>
                             <p class="text-[10px] text-blue-600 font-semibold">Mensalidades recebidas no mês</p>
@@ -904,7 +914,7 @@
 
             if (autoCalc.totalAvulsos > 0) {
                 listRec.innerHTML += `
-                    <div class="flex justify-between items-center border-b pb-2 bg-orange-50 p-2 rounded mb-2 border-l-4 border-orange-500">
+                    <div class="flex justify-between items-center border-b pb-2 bg-orange-50 p-2 rounded mb-2 border-l-4 border-orange-500 shadow-sm">
                         <div>
                             <p class="font-bold text-sm text-orange-800">Avulsos (Automático)</p>
                             <p class="text-[10px] text-orange-600 font-semibold">Avulsos recebidos no mês</p>
@@ -923,7 +933,7 @@
                     listRec.innerHTML += `
                         <div class="flex justify-between items-center border-b pb-2 mt-2">
                             <div>
-                                <p class="font-semibold text-sm">${t.desc} ${refMes}</p>
+                                <p class="font-semibold text-sm text-slate-700">${t.desc} ${refMes}</p>
                             </div>
                             <div class="flex items-center space-x-3">
                                 <span class="font-bold text-emerald-600">${valorF}</span>
@@ -933,8 +943,8 @@
                 } else {
                     totDes += parseFloat(t.valor);
                     listDes.innerHTML += `
-                        <div class="flex justify-between items-center border-b pb-2">
-                            <p class="font-semibold text-sm flex items-center">${t.desc} ${refMes} ${badgeQuadra}</p>
+                        <div class="flex justify-between items-center border-b pb-2 mt-2">
+                            <p class="font-semibold text-sm text-slate-700 flex items-center">${t.desc} ${refMes} ${badgeQuadra}</p>
                             <div class="flex items-center space-x-3">
                                 <span class="font-bold text-red-600">- ${valorF}</span>
                                 <button onclick="deleteTransaction(${t.id})" class="text-xs text-red-500 font-bold bg-slate-100 px-2 py-1 rounded">X</button>
@@ -1051,6 +1061,146 @@
             });
         }
 
+        // NOVO: RELATÓRIOS E ESTATÍSTICAS
+        function renderRelatorios() {
+            // 1. Alerta de Avulsos "Gastões"
+            const avulsosPorMes = {};
+            data.partidas.forEach(p => {
+                const mesAno = p.data.substring(0, 7);
+                if (!avulsosPorMes[mesAno]) avulsosPorMes[mesAno] = {};
+                
+                p.jogadores.forEach(j => {
+                    if (j.tipo === 'avulso' && j.metodoPagamento && j.metodoPagamento !== 'isento') {
+                        const val = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_AVULSO;
+                        if (!avulsosPorMes[mesAno][j.nome]) avulsosPorMes[mesAno][j.nome] = 0;
+                        avulsosPorMes[mesAno][j.nome] += val;
+                    }
+                });
+            });
+
+            const listaAvulsosHTML = document.getElementById('lista-avulsos-gastoes');
+            listaAvulsosHTML.innerHTML = '';
+            let encontrouGastao = false;
+
+            Object.keys(avulsosPorMes).sort().reverse().forEach(mesAno => {
+                const [ano, mes] = mesAno.split('-');
+                
+                Object.keys(avulsosPorMes[mesAno]).forEach(nome => {
+                    const totalGasto = avulsosPorMes[mesAno][nome];
+                    if (totalGasto > 60) {
+                        encontrouGastao = true;
+                        listaAvulsosHTML.innerHTML += `
+                            <div class="flex justify-between items-center bg-orange-50 p-2.5 rounded-lg border border-orange-200">
+                                <div>
+                                    <p class="font-bold text-sm text-orange-900">${nome}</p>
+                                    <p class="text-[10px] text-orange-700 font-semibold">Mês: ${mes}/${ano}</p>
+                                </div>
+                                <span class="font-black text-orange-700">${formatarMoeda(totalGasto)}</span>
+                            </div>
+                        `;
+                    }
+                });
+            });
+
+            if(!encontrouGastao) {
+                listaAvulsosHTML.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum avulso gastou mais de R$ 60,00 nos meses registrados.</p>';
+            }
+
+            // 2. Frequência de Mensalistas
+            const freqMensalistas = {};
+            data.partidas.forEach(p => {
+                p.jogadores.forEach(j => {
+                    if (j.tipo === 'mensalista') {
+                        if (!freqMensalistas[j.nome]) freqMensalistas[j.nome] = { presencas: 0, faltas: 0 };
+                        if (j.presente) freqMensalistas[j.nome].presencas++;
+                        else freqMensalistas[j.nome].faltas++;
+                    }
+                });
+            });
+
+            const listaFreqHTML = document.getElementById('lista-frequencia-mensalistas');
+            listaFreqHTML.innerHTML = '';
+            const nomesMensalistas = Object.keys(freqMensalistas).sort();
+
+            if(nomesMensalistas.length === 0) {
+                listaFreqHTML.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum mensalista cadastrado no histórico.</p>';
+            } else {
+                nomesMensalistas.forEach(nome => {
+                    const f = freqMensalistas[nome];
+                    const totalJogos = f.presencas + f.faltas;
+                    const perc = totalJogos === 0 ? 0 : Math.round((f.presencas / totalJogos) * 100);
+                    
+                    let corBadge = 'bg-emerald-100 text-emerald-700'; // Bom
+                    if (perc < 50) corBadge = 'bg-red-100 text-red-700'; // Ruim
+                    else if (perc < 75) corBadge = 'bg-orange-100 text-orange-700'; // Médio
+
+                    listaFreqHTML.innerHTML += `
+                        <li class="py-2.5 flex justify-between items-center border-b border-slate-100 last:border-0">
+                            <div>
+                                <p class="font-bold text-sm text-slate-700">${nome}</p>
+                                <p class="text-[10px] text-slate-500 font-semibold">${f.presencas} presenças | ${f.faltas} faltas</p>
+                            </div>
+                            <span class="text-xs font-bold px-2 py-1 rounded-lg ${corBadge}">${perc}% pres.</span>
+                        </li>
+                    `;
+                });
+            }
+
+            // 3. Gráfico Evolução de Presenças (Últimos 10 jogos)
+            const labelsDatas = [];
+            const dataPresentes = [];
+            const dataFaltas = [];
+
+            const partidasOrdenadas = [...data.partidas].sort((a,b) => new Date(a.data) - new Date(b.data));
+            const ultimasPartidas = partidasOrdenadas.slice(-10); // Pegar máximo de 10 peladas para não espremer
+
+            ultimasPartidas.forEach(p => {
+                labelsDatas.push(formatDataBR(p.data).substring(0, 5)); // Apenas dia/mês
+                let pres = 0, falt = 0;
+                p.jogadores.forEach(j => {
+                    if(j.tipo === 'mensalista') {
+                        if(j.presente) pres++; else falt++;
+                    }
+                });
+                dataPresentes.push(pres);
+                dataFaltas.push(falt);
+            });
+
+            if (chartFreq) chartFreq.destroy();
+            const ctxFreq = document.getElementById('chartFrequencia').getContext('2d');
+            chartFreq = new Chart(ctxFreq, {
+                type: 'line',
+                data: {
+                    labels: labelsDatas.length > 0 ? labelsDatas : ['Nenhuma'],
+                    datasets: [
+                        {
+                            label: 'Presentes',
+                            data: dataPresentes.length > 0 ? dataPresentes : [0],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Ausentes',
+                            data: dataFaltas.length > 0 ? dataFaltas : [0],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: { 
+                    responsive: true, 
+                    plugins: { legend: { position: 'bottom' } }, 
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } 
+                }
+            });
+        }
+
         function renderAll() {
             renderTercas();
             renderFinanceiro();
@@ -1058,6 +1208,7 @@
             renderUsuarios();
             renderComprovantes();
             renderMidia();
+            renderRelatorios();
             atualizarDisplayNums();
         }
 

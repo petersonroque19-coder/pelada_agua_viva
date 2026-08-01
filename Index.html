@@ -14,7 +14,6 @@
         body { padding-bottom: 5rem; }
         .modal { display: none; }
         .modal.active { display: flex; }
-        /* Esconder scrollbar na navegação para ficar mais bonito */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -78,6 +77,11 @@
                 <canvas id="chartEvolucaoMensal" height="220"></canvas>
             </div>
 
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200 border-l-4 border-l-orange-500">
+                <h3 class="text-sm font-semibold text-slate-500 mb-2">Receita de Avulsos (R$) por Mês</h3>
+                <canvas id="chartAvulsosMensal" height="180"></canvas>
+            </div>
+
             <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200">
                 <h3 class="text-sm font-semibold text-slate-500 mb-2">Distribuição Geral (R$)</h3>
                 <canvas id="chartFinanceiro" height="180"></canvas>
@@ -104,6 +108,13 @@
             <div id="area-listas-pelada">
                 
                 <button onclick="openPlayerModal()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl shadow-sm mb-4">+ Adicionar Jogador</button>
+
+                <!-- FAIXA DE QUÓRUM TOTAL -->
+                <div id="banner-quorum" class="bg-emerald-100 text-emerald-800 text-center py-2.5 rounded-xl mb-4 font-bold text-sm shadow-sm border border-emerald-200 flex justify-center items-center space-x-2">
+                    <span>🔥 Total em Quadra:</span>
+                    <span id="texto-total-presentes" class="text-xl font-black">0</span>
+                    <span>jogadores</span>
+                </div>
 
                 <!-- ABAS INTERNAS: MENSALISTAS x AVULSOS -->
                 <div class="flex space-x-2 mb-4">
@@ -188,7 +199,7 @@
             </div>
         </section>
 
-        <!-- ABA 5: COMPROVANTES -->
+        <!-- ABA 5: COMPROVANTES (ATUALIZADA COM DATA E DOWNLOAD DE PDF/FOTO) -->
         <section id="tab-comprovantes" class="tab-content">
             <h2 class="text-lg font-bold mb-4 text-slate-700">Comprovantes de Pagamento</h2>
             
@@ -196,6 +207,10 @@
                 <div class="mb-3">
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Nome / Descrição do Comprovante</label>
                     <input type="text" id="comp-desc" class="w-full border rounded-lg p-2 text-sm" placeholder="Ex: Pix da Mensalidade do João - Agosto">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Data do Comprovante</label>
+                    <input type="date" id="comp-data" class="w-full border rounded-lg p-2 text-sm">
                 </div>
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Arquivo (Foto, Print ou PDF)</label>
@@ -254,20 +269,18 @@
             </div>
         </section>
 
-        <!-- ABA 8: RELATÓRIOS (NOVO) -->
+        <!-- ABA 8: RELATÓRIOS -->
         <section id="tab-relatorios" class="tab-content">
             <h2 class="text-lg font-bold mb-4 text-slate-700">Relatórios e Estatísticas</h2>
             
-            <!-- Alerta de Avulsos -->
             <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200 border-l-4 border-l-orange-500">
                 <h3 class="font-bold text-sm text-slate-700 mb-1 flex items-center">🚨 Alerta: Avulsos "Gastões"</h3>
-                <p class="text-xs text-slate-500 mb-3 leading-tight">Avulsos que gastaram mais de R$ 60,00 num único mês (financeiramente é melhor virarem mensalistas).</p>
+                <p class="text-xs text-slate-500 mb-3 leading-tight">Avulsos que gastaram mais de R$ 60,00 num único mês.</p>
                 <div id="lista-avulsos-gastoes" class="space-y-2">
                     <!-- Preenchido via JS -->
                 </div>
             </div>
 
-            <!-- Frequência Mensalistas -->
             <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200 border-l-4 border-l-blue-500">
                 <h3 class="font-bold text-sm text-slate-700 mb-1 flex items-center">📊 Regularidade dos Mensalistas</h3>
                 <p class="text-xs text-slate-500 mb-3 leading-tight">Média de frequência com base em todo o histórico de jogos.</p>
@@ -276,7 +289,6 @@
                 </ul>
             </div>
 
-            <!-- Gráfico Evolução Presença -->
             <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200">
                 <h3 class="font-bold text-sm text-slate-700 mb-3">Evolução: Presentes x Ausentes (Últimos jogos)</h3>
                 <canvas id="chartFrequencia" height="200"></canvas>
@@ -453,7 +465,7 @@
         };
 
         let partidaAtualId = null;
-        let chartFin = null, chartEvolucao = null, chartFreq = null;
+        let chartFin = null, chartEvolucao = null, chartFreq = null, chartAvulsos = null;
         let numerosDisponiveis = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
         let girandoSorteio = false;
 
@@ -667,7 +679,7 @@
             const listAvulsos = document.getElementById('lista-avulsos');
             listMensalistas.innerHTML = ''; listAvulsos.innerHTML = '';
             
-            let cMensPres = 0, cMensAus = 0, cAvul = 0;
+            let cMensPres = 0, cMensAus = 0, cAvulPres = 0;
 
             partida.jogadores.forEach(jog => {
                 const isPago = jog.metodoPagamento === 'pix' || jog.metodoPagamento === 'dinheiro';
@@ -711,13 +723,16 @@
                     if (jog.presente) cMensPres++; else cMensAus++;
                     listMensalistas.innerHTML += innerHTMLJogador;
                 } else {
-                    cAvul++;
+                    if (jog.presente) cAvulPres++;
                     listAvulsos.innerHTML += innerHTMLJogador;
                 }
             });
 
-            document.getElementById('badge-mensalistas').innerText = `${cMensPres} jogaram / ${cMensAus} faltaram`;
-            document.getElementById('badge-avulsos').innerText = `${cAvul} presentes`;
+            document.getElementById('badge-mensalistas').innerText = `${cMensPres} presentes / ${cMensAus} faltaram`;
+            document.getElementById('badge-avulsos').innerText = `${cAvulPres} presentes`;
+
+            const totalPresentes = cMensPres + cAvulPres;
+            document.getElementById('texto-total-presentes').innerText = totalPresentes;
         }
 
         window.changePelada = function() {
@@ -794,9 +809,10 @@
             document.getElementById('lista-nums-disp').innerHTML = texto;
         }
 
-        // UPLOAD COMPROVANTES E MÍDIA
+        // COMPROVANTES (COM TRATAMENTO INTELIGENTE PARA PDF E DOWNLOAD DIRETO)
         window.salvarComprovante = function() {
             const desc = document.getElementById('comp-desc').value.trim();
+            const dataComp = document.getElementById('comp-data').value;
             const fileInput = document.getElementById('comp-file');
             
             if(!desc || fileInput.files.length === 0) return alert("Preencha a descrição e selecione um arquivo!");
@@ -804,8 +820,16 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 if(!data.comprovantes) data.comprovantes = [];
-                data.comprovantes.push({ id: Date.now(), desc, url: e.target.result });
+                data.comprovantes.push({ 
+                    id: Date.now(), 
+                    desc, 
+                    data: dataComp, 
+                    url: e.target.result, 
+                    tipo: fileInput.files[0].type,
+                    nomeArquivo: fileInput.files[0].name 
+                });
                 document.getElementById('comp-desc').value = '';
+                document.getElementById('comp-data').value = '';
                 fileInput.value = '';
                 saveData();
             };
@@ -828,15 +852,36 @@
             }
 
             data.comprovantes.forEach(c => {
+                let previewHtml = '';
+                // Verifica se é PDF para não quebrar a imagem e exibir um card formatado
+                if (c.tipo === 'application/pdf' || (c.nomeArquivo && c.nomeArquivo.endsWith('.pdf'))) {
+                    previewHtml = `
+                        <a href="${c.url}" download="${c.nomeArquivo || 'comprovante.pdf'}" class="w-full h-28 bg-slate-100 border border-slate-200 rounded flex flex-col items-center justify-center hover:bg-slate-200 transition-colors">
+                            <span class="text-3xl mb-1">📄</span>
+                            <span class="text-[10px] font-bold text-slate-600 px-2 truncate w-full text-center">Baixar PDF</span>
+                        </a>
+                    `;
+                } else {
+                    previewHtml = `
+                        <a href="${c.url}" download="${c.nomeArquivo || 'comprovante.png'}" class="block">
+                            <img src="${c.url}" alt="${c.desc}" class="w-full h-28 object-cover rounded border hover:opacity-90">
+                        </a>
+                    `;
+                }
+
+                const dataFmt = c.data ? formatDataBR(c.data) : '';
+
                 lista.innerHTML += `
                     <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
                         <div>
-                            <a href="${c.url}" target="_blank">
-                                <img src="${c.url}" alt="${c.desc}" class="w-full h-28 object-cover rounded mb-2 border hover:opacity-90">
-                            </a>
-                            <p class="text-xs font-bold text-slate-700 truncate">${c.desc}</p>
+                            ${previewHtml}
+                            <p class="text-xs font-bold text-slate-700 truncate mt-1">${c.desc}</p>
+                            ${dataFmt ? `<p class="text-[10px] text-slate-400">📅 ${dataFmt}</p>` : ''}
                         </div>
-                        <button onclick="deletarComprovante(${c.id})" class="mt-2 w-full bg-red-100 text-red-600 text-[10px] font-bold py-1 rounded">Excluir</button>
+                        <div class="mt-2 space-y-1">
+                            <a href="${c.url}" download="${c.nomeArquivo || 'comprovante'}" class="block w-full text-center bg-blue-50 text-blue-600 text-[10px] font-bold py-1 rounded hover:bg-blue-100">📥 Baixar Arquivo</a>
+                            <button onclick="deletarComprovante(${c.id})" class="w-full bg-red-100 text-red-600 text-[10px] font-bold py-1 rounded">Excluir</button>
+                        </div>
                     </div>
                 `;
             });
@@ -960,6 +1005,8 @@
 
         function renderDashboard() {
             let totRecManuais = 0, totDes = 0, totQuadra = 0;
+            const mesesMap = {};
+            const avulsosMap = {};
             
             data.transacoes.forEach(t => {
                 if (t.tipo === 'receita') {
@@ -969,6 +1016,30 @@
                     totDes += parseFloat(t.valor);
                     if(t.isQuadra) totQuadra += parseFloat(t.valor);
                 }
+
+                const mesAno = t.mesRef || new Date().toISOString().substring(0, 7);
+                if (!mesesMap[mesAno]) mesesMap[mesAno] = { receitas: 0, despesas: 0 };
+                if (t.tipo === 'receita') mesesMap[mesAno].receitas += parseFloat(t.valor);
+                if (t.tipo === 'despesa') mesesMap[mesAno].despesas += parseFloat(t.valor);
+            });
+
+            data.partidas.forEach(p => {
+                const mesAno = p.data.substring(0, 7);
+                if (!mesesMap[mesAno]) mesesMap[mesAno] = { receitas: 0, despesas: 0 };
+                if (!avulsosMap[mesAno]) avulsosMap[mesAno] = 0;
+                
+                p.jogadores.forEach(j => {
+                    if (j.metodoPagamento && j.metodoPagamento !== 'isento') {
+                        if (j.tipo === 'avulso') {
+                            const valAv = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_AVULSO;
+                            mesesMap[mesAno].receitas += valAv;
+                            avulsosMap[mesAno] += valAv;
+                        } else if (j.tipo === 'mensalista') {
+                            const val = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_MENSALISTA;
+                            mesesMap[mesAno].receitas += val;
+                        }
+                    }
+                });
             });
 
             const autoCalc = calcularReceitasAutomaticas();
@@ -979,36 +1050,6 @@
             document.getElementById('dash-saldo').innerText = formatarMoeda(saldo);
             document.getElementById('dash-saidas').innerText = formatarMoeda(totDes);
             document.getElementById('dash-quadra').innerText = formatarMoeda(totQuadra);
-
-            const mesesMap = {};
-            
-            data.partidas.forEach(p => {
-                const mesAno = p.data.substring(0, 7);
-                if (!mesesMap[mesAno]) mesesMap[mesAno] = { receitas: 0, despesas: 0 };
-                
-                p.jogadores.forEach(j => {
-                    if (j.metodoPagamento && j.metodoPagamento !== 'isento') {
-                        if (j.tipo === 'avulso') {
-                            const valAv = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_AVULSO;
-                            mesesMap[mesAno].receitas += valAv;
-                        } else if (j.tipo === 'mensalista') {
-                            const val = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_MENSALISTA;
-                            mesesMap[mesAno].receitas += val;
-                        }
-                    }
-                });
-            });
-
-            data.transacoes.forEach(t => {
-                const mesAno = t.mesRef || new Date().toISOString().substring(0, 7);
-                if (!mesesMap[mesAno]) mesesMap[mesAno] = { receitas: 0, despesas: 0 };
-                if (t.tipo === 'receita') {
-                    mesesMap[mesAno].receitas += parseFloat(t.valor);
-                }
-                if (t.tipo === 'despesa') {
-                    mesesMap[mesAno].despesas += parseFloat(t.valor);
-                }
-            });
 
             const mesesOrdenados = Object.keys(mesesMap).sort();
             const labelsMeses = mesesOrdenados.map(m => {
@@ -1025,25 +1066,37 @@
                 data: {
                     labels: labelsMeses.length > 0 ? labelsMeses : ['Atual'],
                     datasets: [
-                        {
-                            label: 'Arrecadação',
-                            data: valoresReceitasMes.length > 0 ? valoresReceitasMes : [totReceitasGeral],
-                            backgroundColor: '#10b981',
-                            borderRadius: 4
-                        },
-                        {
-                            label: 'Despesas',
-                            data: valoresDespesasMes.length > 0 ? valoresDespesasMes : [totDes],
-                            backgroundColor: '#ef4444',
-                            borderRadius: 4
-                        }
+                        { label: 'Arrecadação', data: valoresReceitasMes.length > 0 ? valoresReceitasMes : [totReceitasGeral], backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'Despesas', data: valoresDespesasMes.length > 0 ? valoresDespesasMes : [totDes], backgroundColor: '#ef4444', borderRadius: 4 }
                     ]
                 },
-                options: { 
-                    responsive: true, 
-                    plugins: { legend: { position: 'bottom' } }, 
-                    scales: { y: { beginAtZero: true } } 
-                }
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+            });
+
+            const mesesAvulsosOrdenados = Object.keys(avulsosMap).sort();
+            const labelsAvulsos = mesesAvulsosOrdenados.map(m => {
+                const [ano, mes] = m.split('-');
+                return `${mes}/${ano}`;
+            });
+            const valoresAvulsos = mesesAvulsosOrdenados.map(m => avulsosMap[m]);
+
+            if (chartAvulsos) chartAvulsos.destroy();
+            const ctxAvulsos = document.getElementById('chartAvulsosMensal').getContext('2d');
+            chartAvulsos = new Chart(ctxAvulsos, {
+                type: 'line',
+                data: {
+                    labels: labelsAvulsos.length > 0 ? labelsAvulsos : ['Nenhum dado'],
+                    datasets: [{
+                        label: 'Avulsos Acumulados',
+                        data: valoresAvulsos.length > 0 ? valoresAvulsos : [0],
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
             });
 
             if (chartFin) chartFin.destroy();
@@ -1052,18 +1105,13 @@
                 type: 'doughnut',
                 data: {
                     labels: ['Entradas', 'Saídas', 'Gasto Quadra'],
-                    datasets: [{
-                        data: [totReceitasGeral, totDes, totQuadra],
-                        backgroundColor: ['#10b981', '#ef4444', '#f97316']
-                    }]
+                    datasets: [{ data: [totReceitasGeral, totDes, totQuadra], backgroundColor: ['#10b981', '#ef4444', '#f97316'] }]
                 },
                 options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
             });
         }
 
-        // NOVO: RELATÓRIOS E ESTATÍSTICAS
         function renderRelatorios() {
-            // 1. Alerta de Avulsos "Gastões"
             const avulsosPorMes = {};
             data.partidas.forEach(p => {
                 const mesAno = p.data.substring(0, 7);
@@ -1090,7 +1138,7 @@
                     if (totalGasto > 60) {
                         encontrouGastao = true;
                         listaAvulsosHTML.innerHTML += `
-                            <div class="flex justify-between items-center bg-orange-50 p-2.5 rounded-lg border border-orange-200">
+                            <div class="flex justify-between items-center bg-orange-50 p-2.5 rounded-lg border border-orange-200 mt-2">
                                 <div>
                                     <p class="font-bold text-sm text-orange-900">${nome}</p>
                                     <p class="text-[10px] text-orange-700 font-semibold">Mês: ${mes}/${ano}</p>
@@ -1106,7 +1154,6 @@
                 listaAvulsosHTML.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum avulso gastou mais de R$ 60,00 nos meses registrados.</p>';
             }
 
-            // 2. Frequência de Mensalistas
             const freqMensalistas = {};
             data.partidas.forEach(p => {
                 p.jogadores.forEach(j => {
@@ -1130,9 +1177,9 @@
                     const totalJogos = f.presencas + f.faltas;
                     const perc = totalJogos === 0 ? 0 : Math.round((f.presencas / totalJogos) * 100);
                     
-                    let corBadge = 'bg-emerald-100 text-emerald-700'; // Bom
-                    if (perc < 50) corBadge = 'bg-red-100 text-red-700'; // Ruim
-                    else if (perc < 75) corBadge = 'bg-orange-100 text-orange-700'; // Médio
+                    let corBadge = 'bg-emerald-100 text-emerald-700';
+                    if (perc < 50) corBadge = 'bg-red-100 text-red-700'; 
+                    else if (perc < 75) corBadge = 'bg-orange-100 text-orange-700'; 
 
                     listaFreqHTML.innerHTML += `
                         <li class="py-2.5 flex justify-between items-center border-b border-slate-100 last:border-0">
@@ -1146,16 +1193,15 @@
                 });
             }
 
-            // 3. Gráfico Evolução de Presenças (Últimos 10 jogos)
             const labelsDatas = [];
             const dataPresentes = [];
             const dataFaltas = [];
 
             const partidasOrdenadas = [...data.partidas].sort((a,b) => new Date(a.data) - new Date(b.data));
-            const ultimasPartidas = partidasOrdenadas.slice(-10); // Pegar máximo de 10 peladas para não espremer
+            const ultimasPartidas = partidasOrdenadas.slice(-10);
 
             ultimasPartidas.forEach(p => {
-                labelsDatas.push(formatDataBR(p.data).substring(0, 5)); // Apenas dia/mês
+                labelsDatas.push(formatDataBR(p.data).substring(0, 5));
                 let pres = 0, falt = 0;
                 p.jogadores.forEach(j => {
                     if(j.tipo === 'mensalista') {
@@ -1173,31 +1219,11 @@
                 data: {
                     labels: labelsDatas.length > 0 ? labelsDatas : ['Nenhuma'],
                     datasets: [
-                        {
-                            label: 'Presentes',
-                            data: dataPresentes.length > 0 ? dataPresentes : [0],
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.3
-                        },
-                        {
-                            label: 'Ausentes',
-                            data: dataFaltas.length > 0 ? dataFaltas : [0],
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.3
-                        }
+                        { label: 'Presentes', data: dataPresentes.length > 0 ? dataPresentes : [0], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, fill: true, tension: 0.3 },
+                        { label: 'Ausentes', data: dataFaltas.length > 0 ? dataFaltas : [0], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 2, fill: true, tension: 0.3 }
                     ]
                 },
-                options: { 
-                    responsive: true, 
-                    plugins: { legend: { position: 'bottom' } }, 
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } 
-                }
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
         }
 

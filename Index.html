@@ -199,7 +199,7 @@
             </div>
         </section>
 
-        <!-- ABA 5: COMPROVANTES (ATUALIZADA COM DATA E DOWNLOAD DE PDF/FOTO) -->
+        <!-- ABA 5: COMPROVANTES -->
         <section id="tab-comprovantes" class="tab-content">
             <h2 class="text-lg font-bold mb-4 text-slate-700">Comprovantes de Pagamento</h2>
             
@@ -241,6 +241,7 @@
                 <button onclick="salvarMidia()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-all">Fazer Upload</button>
             </div>
 
+            <h3 class="font-bold text-sm text-slate-700 mb-3">MÍDIAS SALVAS</h3>
             <div id="lista-midia" class="grid grid-cols-2 gap-3">
                 <!-- Preenchido via JS -->
             </div>
@@ -809,7 +810,7 @@
             document.getElementById('lista-nums-disp').innerHTML = texto;
         }
 
-        // COMPROVANTES (COM TRATAMENTO INTELIGENTE PARA PDF E DOWNLOAD DIRETO)
+        // COMPROVANTES
         window.salvarComprovante = function() {
             const desc = document.getElementById('comp-desc').value.trim();
             const dataComp = document.getElementById('comp-data').value;
@@ -853,7 +854,6 @@
 
             data.comprovantes.forEach(c => {
                 let previewHtml = '';
-                // Verifica se é PDF para não quebrar a imagem e exibir um card formatado
                 if (c.tipo === 'application/pdf' || (c.nomeArquivo && c.nomeArquivo.endsWith('.pdf'))) {
                     previewHtml = `
                         <a href="${c.url}" download="${c.nomeArquivo || 'comprovante.pdf'}" class="w-full h-28 bg-slate-100 border border-slate-200 rounded flex flex-col items-center justify-center hover:bg-slate-200 transition-colors">
@@ -887,6 +887,7 @@
             });
         }
 
+        // MÍDIA (COM OPÇÃO DE DOWNLOAD)
         window.salvarMidia = function() {
             const desc = document.getElementById('midia-desc').value.trim();
             const fileInput = document.getElementById('midia-file');
@@ -896,7 +897,13 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 if(!data.midia) data.midia = [];
-                data.midia.push({ id: Date.now(), desc, url: e.target.result, tipo: fileInput.files[0].type });
+                data.midia.push({ 
+                    id: Date.now(), 
+                    desc, 
+                    url: e.target.result, 
+                    tipo: fileInput.files[0].type,
+                    nomeArquivo: fileInput.files[0].name 
+                });
                 document.getElementById('midia-desc').value = '';
                 fileInput.value = '';
                 saveData();
@@ -920,18 +927,23 @@
             }
 
             data.midia.forEach(m => {
-                let conteudoHtml = `<img src="${m.url}" alt="${m.desc}" class="w-full h-28 object-cover rounded mb-2 border">`;
+                let conteudoHtml = `<img src="${m.url}" alt="${m.desc}" class="w-full h-28 object-cover rounded border hover:opacity-90">`;
                 if(m.tipo && m.tipo.includes('video')) {
-                    conteudoHtml = `<video src="${m.url}" class="w-full h-28 object-cover rounded mb-2 border" controls></video>`;
+                    conteudoHtml = `<video src="${m.url}" class="w-full h-28 object-cover rounded border" controls></video>`;
                 }
 
                 lista.innerHTML += `
                     <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
                         <div>
-                            ${conteudoHtml}
+                            <a href="${m.url}" download="${m.nomeArquivo || 'midia'}" class="block mb-2">
+                                ${conteudoHtml}
+                            </a>
                             <p class="text-xs font-bold text-slate-700 truncate">${m.desc}</p>
                         </div>
-                        <button onclick="deletarMidia(${m.id})" class="mt-2 w-full bg-red-100 text-red-600 text-[10px] font-bold py-1 rounded">Excluir</button>
+                        <div class="mt-2 space-y-1">
+                            <a href="${m.url}" download="${m.nomeArquivo || 'midia'}" class="block w-full text-center bg-blue-50 text-blue-600 text-[10px] font-bold py-1 rounded hover:bg-blue-100">📥 Baixar Arquivo</a>
+                            <button onclick="deletarMidia(${m.id})" class="w-full bg-red-100 text-red-600 text-[10px] font-bold py-1 rounded">Excluir</button>
+                        </div>
                     </div>
                 `;
             });

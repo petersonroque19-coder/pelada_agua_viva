@@ -19,7 +19,7 @@
 <body class="bg-slate-100 text-slate-800 font-sans">
 
     <!-- TELA DE LOGIN -->
-    <div id="modal-login" class="modal fixed inset-0 bg-slate-900 z-50 items-center justify-center p-4 active">
+    <div id="modal-login" class="modal fixed inset-0 bg-slate-900 z-50 items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
             <h1 class="text-2xl font-bold text-emerald-600 mb-2">⚽ Gestão da Pelada</h1>
             <p class="text-xs text-slate-500 mb-6">Entre com suas credenciais de acesso</p>
@@ -138,7 +138,27 @@
             </div>
         </section>
 
-        <!-- ABA 3: FINANCEIRO -->
+        <!-- ABA 3: SORTEIO DE NÚMEROS (GIRADOR) -->
+        <section id="tab-sorteio" class="tab-content">
+            <h2 class="text-lg font-bold mb-4 text-slate-700">Sorteio da Pelada</h2>
+            <div class="bg-white p-6 rounded-xl shadow-sm mb-4 border border-slate-200 text-center">
+                <p class="text-xs text-slate-500 mb-6">Toque no círculo para girar e sortear um número!</p>
+                
+                <!-- Círculo Giratório -->
+                <div onclick="girarNumero()" id="circulo-sorteio" class="w-36 h-36 mx-auto bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-5xl font-black shadow-xl cursor-pointer transition-transform active:scale-95 mb-6 select-none">
+                    <span id="numero-sorteado">?</span>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 text-left">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase text-center mb-2">Números Disponíveis</h3>
+                    <p id="lista-nums-disp" class="text-xs text-slate-600 text-center leading-relaxed font-mono">1 • 2 • 3 • 4 • 5 • 6 • 7 • 8 • 9 • 10 • 11 • 12 • 13 • 14 • 15 • 16 • 17 • 18 • 19 • 20</p>
+                </div>
+
+                <button onclick="reiniciarSorteioNums()" class="w-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold py-2.5 rounded-xl text-sm transition-all shadow-sm">Reiniciar Números (1 a 20)</button>
+            </div>
+        </section>
+
+        <!-- ABA 4: FINANCEIRO -->
         <section id="tab-financeiro" class="tab-content">
             <h2 class="text-lg font-bold mb-4 text-slate-700">Controle de Caixa</h2>
             
@@ -165,7 +185,50 @@
             </div>
         </section>
 
-        <!-- ABA 4: USUÁRIOS E SEGURANÇA -->
+        <!-- ABA 5: COMPROVANTES -->
+        <section id="tab-comprovantes" class="tab-content">
+            <h2 class="text-lg font-bold mb-4 text-slate-700">Comprovantes de Pagamento</h2>
+            
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-6 border border-slate-200">
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nome / Descrição do Comprovante</label>
+                    <input type="text" id="comp-desc" class="w-full border rounded-lg p-2 text-sm" placeholder="Ex: Pix da Mensalidade do João - Agosto">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Arquivo (Foto, Print ou PDF)</label>
+                    <input type="file" id="comp-file" accept="image/*,application/pdf" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                </div>
+                <button onclick="salvarComprovante()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-all">Salvar Comprovante</button>
+            </div>
+
+            <h3 class="font-bold text-sm text-slate-700 mb-3">COMPROVANTES SALVOS</h3>
+            <div id="lista-comprovantes" class="grid grid-cols-2 gap-3">
+                <!-- Preenchido via JS -->
+            </div>
+        </section>
+
+        <!-- ABA 6: MÍDIA (FOTOS E VÍDEOS) -->
+        <section id="tab-midia" class="tab-content">
+            <h2 class="text-lg font-bold mb-4 text-slate-700">Galeria de Mídia (Lances e Resenha)</h2>
+            
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-6 border border-slate-200">
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Título da Foto ou Vídeo</label>
+                    <input type="text" id="midia-desc" class="w-full border rounded-lg p-2 text-sm" placeholder="Ex: Golaço do jogo">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Enviar Foto ou Vídeo</label>
+                    <input type="file" id="midia-file" accept="image/*,video/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                </div>
+                <button onclick="salvarMidia()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-all">Fazer Upload</button>
+            </div>
+
+            <div id="lista-midia" class="grid grid-cols-2 gap-3">
+                <!-- Preenchido via JS -->
+            </div>
+        </section>
+
+        <!-- ABA 7: USUÁRIOS E SEGURANÇA -->
         <section id="tab-usuarios" class="tab-content">
             <h2 class="text-lg font-bold mb-4 text-slate-700">Acessos e Usuários</h2>
             
@@ -191,26 +254,41 @@
     </main>
 
     <!-- NAVEGAÇÃO INFERIOR -->
-    <nav class="bg-white border-t border-slate-200 fixed bottom-0 w-full z-10">
-        <ul class="flex justify-around items-center h-16 text-xs font-medium text-slate-500">
-            <li class="flex-1 text-center" onclick="changeTab('tab-inicio', this)">
+    <nav class="bg-white border-t border-slate-200 fixed bottom-0 w-full z-10 overflow-x-auto">
+        <ul class="flex justify-around items-center h-16 text-[10px] font-medium text-slate-500 min-w-full">
+            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-inicio', this)">
                 <button class="w-full h-full flex flex-col items-center justify-center text-emerald-600 nav-btn">
-                    <span class="text-xl mb-1">📊</span> Início
+                    <span class="text-base mb-0.5">📊</span> Início
                 </button>
             </li>
-            <li class="flex-1 text-center" onclick="changeTab('tab-tercas', this)">
+            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-tercas', this)">
                 <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
-                    <span class="text-xl mb-1">📅</span> Terças
+                    <span class="text-base mb-0.5">📅</span> Terças
                 </button>
             </li>
-            <li class="flex-1 text-center" onclick="changeTab('tab-financeiro', this)">
+            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-sorteio', this)">
                 <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
-                    <span class="text-xl mb-1">💰</span> Caixa
+                    <span class="text-base mb-0.5">🎲</span> Sorteio
                 </button>
             </li>
-            <li class="flex-1 text-center" onclick="changeTab('tab-usuarios', this)">
+            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-financeiro', this)">
                 <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
-                    <span class="text-xl mb-1">🔒</span> Acessos
+                    <span class="text-base mb-0.5">💰</span> Caixa
+                </button>
+            </li>
+            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-comprovantes', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+                    <span class="text-base mb-0.5">🧾</span> Recibos
+                </button>
+            </li>
+            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-midia', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+                    <span class="text-base mb-0.5">📸</span> Mídia
+                </button>
+            </li>
+            <li class="flex-1 text-center cursor-pointer" onclick="changeTab('tab-usuarios', this)">
+                <button class="w-full h-full flex flex-col items-center justify-center hover:text-emerald-600 nav-btn">
+                    <span class="text-base mb-0.5">🔒</span> Acessos
                 </button>
             </li>
         </ul>
@@ -332,11 +410,15 @@
                 { id: 1, user: "admin", pass: "1234" }
             ],
             partidas: [],
-            transacoes: []
+            transacoes: [],
+            comprovantes: [],
+            midia: []
         };
 
         let partidaAtualId = null;
         let chartFin = null, chartEvolucao = null;
+        let numerosDisponiveis = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+        let girandoSorteio = false;
 
         window.fazerLogin = function() {
             const u = document.getElementById('login-user').value.trim();
@@ -347,6 +429,7 @@
             const userEncontrado = data.usuarios.find(item => item.user === u && item.pass === p);
             
             if(userEncontrado) {
+                localStorage.setItem('pelada_aguaviva_logada', 'true');
                 document.getElementById('modal-login').classList.remove('active');
             } else {
                 alert("Usuário ou senha incorretos!");
@@ -416,6 +499,8 @@
                     if(!data.usuarios) {
                         data.usuarios = [{ id: 1, user: "admin", pass: data.adminPass || "1234" }];
                     }
+                    if(!data.comprovantes) data.comprovantes = [];
+                    if(!data.midia) data.midia = [];
                 } else {
                     await saveData();
                 }
@@ -425,6 +510,14 @@
             if (data.partidas && data.partidas.length > 0) {
                 partidaAtualId = data.partidas[0].id;
             }
+            
+            // Sessão persistente ativa
+            if (localStorage.getItem('pelada_aguaviva_logada') === 'true') {
+                document.getElementById('modal-login').classList.remove('active');
+            } else {
+                document.getElementById('modal-login').classList.add('active');
+            }
+
             renderAll();
         }
 
@@ -437,6 +530,8 @@
             
             if(tabId === 'tab-inicio') renderDashboard();
             if(tabId === 'tab-usuarios') renderUsuarios();
+            if(tabId === 'tab-comprovantes') renderComprovantes();
+            if(tabId === 'tab-midia') renderMidia();
         }
 
         function renderUsuarios() {
@@ -623,6 +718,157 @@
             if(jog) { jog.metodoPagamento = method; saveData(); }
         }
 
+        // SORTEIO DE NÚMEROS (GIRADOR ALEATÓRIO)
+        let intervaloGiro = null;
+        window.girarNumero = function() {
+            if (numerosDisponiveis.length === 0) {
+                alert("Todos os números já foram sorteados! Reinicie para continuar.");
+                return;
+            }
+
+            const elNum = document.getElementById('numero-sorteado');
+            const circulo = document.getElementById('circulo-sorteio');
+
+            if (!girandoSorteio) {
+                girandoSorteio = true;
+                circulo.classList.add('animate-pulse');
+                
+                intervaloGiro = setInterval(() => {
+                    const randTemp = numerosDisponiveis[Math.floor(Math.random() * numerosDisponiveis.length)];
+                    elNum.innerText = randTemp;
+                }, 80);
+            } else {
+                clearInterval(intervaloGiro);
+                girandoSorteio = false;
+                circulo.classList.remove('animate-pulse');
+
+                const randomIndex = Math.floor(Math.random() * numerosDisponiveis.length);
+                const sorteado = numerosDisponiveis.splice(randomIndex, 1)[0];
+                elNum.innerText = sorteado;
+                atualizarDisplayNums();
+            }
+        };
+
+        window.reiniciarSorteioNums = function() {
+            clearInterval(intervaloGiro);
+            girandoSorteio = false;
+            document.getElementById('circulo-sorteio').classList.remove('animate-pulse');
+            numerosDisponiveis = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+            document.getElementById('numero-sorteado').innerText = "?";
+            atualizarDisplayNums();
+        };
+
+        function atualizarDisplayNums() {
+            let texto = "";
+            for (let i = 1; i <= 20; i++) {
+                if (numerosDisponiveis.includes(i)) {
+                    texto += i + (i < 20 ? " • " : "");
+                } else {
+                    texto += `<span class="text-slate-300 line-through">${i}</span>` + (i < 20 ? " • " : "");
+                }
+            }
+            document.getElementById('lista-nums-disp').innerHTML = texto;
+        }
+
+        // COMPROVANTES COM UPLOAD REAL
+        window.salvarComprovante = function() {
+            const desc = document.getElementById('comp-desc').value.trim();
+            const fileInput = document.getElementById('comp-file');
+            
+            if(!desc || fileInput.files.length === 0) return alert("Preencha a descrição e selecione um arquivo!");
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if(!data.comprovantes) data.comprovantes = [];
+                data.comprovantes.push({ id: Date.now(), desc, url: e.target.result });
+                document.getElementById('comp-desc').value = '';
+                fileInput.value = '';
+                saveData();
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        };
+
+        window.deletarComprovante = function(id) {
+            if(confirm("Deseja remover este comprovante?")) {
+                data.comprovantes = data.comprovantes.filter(c => c.id !== id);
+                saveData();
+            }
+        };
+
+        function renderComprovantes() {
+            const lista = document.getElementById('lista-comprovantes');
+            lista.innerHTML = '';
+            if(!data.comprovantes || data.comprovantes.length === 0) {
+                lista.innerHTML = '<p class="text-xs text-slate-400 col-span-2 text-center py-4">Nenhum comprovante salvo ainda.</p>';
+                return;
+            }
+
+            data.comprovantes.forEach(c => {
+                lista.innerHTML += `
+                    <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <a href="${c.url}" target="_blank">
+                                <img src="${c.url}" alt="${c.desc}" class="w-full h-28 object-cover rounded mb-2 border hover:opacity-90">
+                            </a>
+                            <p class="text-xs font-bold text-slate-700 truncate">${c.desc}</p>
+                        </div>
+                        <button onclick="deletarComprovante(${c.id})" class="mt-2 w-full bg-red-100 text-red-600 text-[10px] font-bold py-1 rounded">Excluir</button>
+                    </div>
+                `;
+            });
+        }
+
+        // MÍDIA COM UPLOAD REAL
+        window.salvarMidia = function() {
+            const desc = document.getElementById('midia-desc').value.trim();
+            const fileInput = document.getElementById('midia-file');
+            
+            if(!desc || fileInput.files.length === 0) return alert("Preencha a descrição e selecione uma foto ou vídeo!");
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if(!data.midia) data.midia = [];
+                data.midia.push({ id: Date.now(), desc, url: e.target.result, tipo: fileInput.files[0].type });
+                document.getElementById('midia-desc').value = '';
+                fileInput.value = '';
+                saveData();
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        };
+
+        window.deletarMidia = function(id) {
+            if(confirm("Deseja remover esta mídia?")) {
+                data.midia = data.midia.filter(m => m.id !== id);
+                saveData();
+            }
+        };
+
+        function renderMidia() {
+            const lista = document.getElementById('lista-midia');
+            lista.innerHTML = '';
+            if(!data.midia || data.midia.length === 0) {
+                lista.innerHTML = '<p class="text-xs text-slate-400 col-span-2 text-center py-4">Nenhuma foto ou vídeo cadastrado.</p>';
+                return;
+            }
+
+            data.midia.forEach(m => {
+                let conteudoHtml = `<img src="${m.url}" alt="${m.desc}" class="w-full h-28 object-cover rounded mb-2 border">`;
+                if(m.tipo && m.tipo.includes('video')) {
+                    conteudoHtml = `<video src="${m.url}" class="w-full h-28 object-cover rounded mb-2 border" controls></video>`;
+                }
+
+                lista.innerHTML += `
+                    <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            ${conteudoHtml}
+                            <p class="text-xs font-bold text-slate-700 truncate">${m.desc}</p>
+                        </div>
+                        <button onclick="deletarMidia(${m.id})" class="mt-2 w-full bg-red-100 text-red-600 text-[10px] font-bold py-1 rounded">Excluir</button>
+                    </div>
+                `;
+            });
+        }
+
         function renderFinanceiro() {
             const listRec = document.getElementById('lista-receitas');
             const listDes = document.getElementById('lista-despesas');
@@ -795,6 +1041,9 @@
             renderFinanceiro();
             renderDashboard();
             renderUsuarios();
+            renderComprovantes();
+            renderMidia();
+            atualizarDisplayNums();
         }
 
         window.openPeladaModal = function() {

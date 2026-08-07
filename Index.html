@@ -436,7 +436,7 @@
     <!-- SCRIPTS COM FIREBASE E COMPRESSOR DE IMAGENS -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA9H7dBbiZtxLFpoNivf5cS0cS6Z1Roylw",
@@ -572,11 +572,16 @@
 
         window.saveData = async function() {
             try {
-                await setDoc(doc(db, "pelada_aguaviva", "dados_gerais"), data);
+                // Remove os arrays de imagens do documento principal para ele ficar super leve
+                const dadosSalvar = { ...data };
+                delete dadosSalvar.comprovantes;
+                delete dadosSalvar.midia;
+                
+                await setDoc(doc(db, "pelada_aguaviva", "dados_gerais"), dadosSalvar);
                 renderAll();
             } catch (e) {
                 console.error("Erro ao salvar no Firebase: ", e);
-                alert("Erro ao salvar! O arquivo pode ser muito pesado ou excedeu o limite do banco de dados.");
+                alert("Erro ao salvar os dados gerais! O arquivo pode ser muito pesado ou excedeu o limite do banco de dados.");
             }
         };
 
@@ -584,22 +589,34 @@
             try {
                 const docRef = doc(db, "pelada_aguaviva", "dados_gerais");
                 const docSnap = await getDoc(docRef);
+                
                 if (docSnap.exists()) {
                     data = docSnap.data();
-                    if(!data.usuarios) {
-                        data.usuarios = [{ id: 1, user: "admin", pass: data.adminPass || "1234" }];
+                    if(!data.usuarios) data.usuarios = [{ id: 1, user: "admin", pass: data.adminPass || "1234" }];
+                    
+                    // MIGRAR DADOS ANTIGOS: Joga imagens antigas para coleções separadas
+                    if(data.comprovantes && data.comprovantes.length > 0) {
+                        for(let c of data.comprovantes) await setDoc(doc(db, "comprovantes", c.id.toString()), c);
                     }
-                    if(!data.comprovantes) data.comprovantes = [];
-                    if(!data.midia) data.midia = [];
+                    if(data.midia && data.midia.length > 0) {
+                        for(let m of data.midia) await setDoc(doc(db, "midias", m.id.toString()), m);
+                    }
                 } else {
                     await saveData();
                 }
+
+                // BUSCAR IMAGENS DE SUAS RESPECTIVAS PASTAS (Coleções)
+                const compSnap = await getDocs(collection(db, "comprovantes"));
+                data.comprovantes = compSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                const midiaSnap = await getDocs(collection(db, "midias"));
+                data.midia = midiaSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
             } catch (e) {
                 console.error("Erro ao carregar do Firebase: ", e);
             }
-            if (data.partidas && data.partidas.length > 0) {
-                partidaAtualId = data.partidas[0].id;
-            }
+            
+            if (data.partidas && data.partidas.length > 0) partidaAtualId = data.partidas[0].id;
             
             if (localStorage.getItem('pelada_aguaviva_logada') === 'true') {
                 document.getElementById('modal-login').classList.remove('active');
@@ -850,7 +867,7 @@
             document.getElementById('lista-nums-disp').innerHTML = texto;
         }
 
-        // COMPROVANTES (COM COMPRESSÃO AUTOMÁTICA)
+        // COMPROVANTES (SALVOS EM COLEÇÃO SEPARADA)
         window.salvarComprovante = async function() {
             const desc = document.getElementById('comp-desc').value.trim();
             const dataComp = document.getElementById('comp-data').value;
@@ -861,26 +878,31 @@
             const file = fileInput.files[0];
             const base64Url = await comprimirImagem(file, 800, 0.7);
 
-            if(!data.comprovantes) data.comprovantes = [];
-            data.comprovantes.push({ 
-                id: Date.now(), 
-                desc, 
-                data: dataComp, 
-                url: base64Url, 
-                tipo: file.type,
-                nomeArquivo: file.name 
-            });
-            
-            document.getElementById('comp-desc').value = '';
-            document.getElementById('comp-data').value = '';
-            fileInput.value = '';
-            saveData();
+            const novoId = Date.now().toString();
+            const novoComp = { desc, data: dataComp, url: base64Url, tipo: file.type, nomeArquivo: file.name };
+
+            try {
+                await setDoc(doc(db, "comprovantes", novoId), novoComp);
+                if(!data.comprovantes) data.comprovantes = [];
+                data.comprovantes.push({ id: novoId, ...novoComp });
+                
+                document.getElementById('comp-desc').value = '';
+                document.getElementById('comp-data').value = '';
+                fileInput.value = '';
+                renderComprovantes();
+            } catch(e) {
+                alert("Erro ao enviar comprovante!");
+                console.error(e);
+            }
         };
 
-        window.deletarComprovante = function(id) {
+        window.deletarComprovante = async function(id) {
             if(confirm("Deseja remover este comprovante?")) {
-                data.comprovantes = data.comprovantes.filter(c => c.id !== id);
-                saveData();
+                try {
+                    await deleteDoc(doc(db, "comprovantes", id.toString()));
+                    data.comprovantes = data.comprovantes.filter(c => c.id.toString() !== id.toString());
+                    renderComprovantes();
+                } catch(e) { console.error(e); }
             }
         };
 
@@ -920,14 +942,14 @@
                         </div>
                         <div class="mt-2 space-y-1">
                             <a href="${c.url}" download="${c.nomeArquivo || 'comprovante'}" class="block w-full text-center bg-blue-50 text-blue-600 text-[10px] font-bold py-1 rounded hover:bg-blue-100">📥 Baixar Arquivo</a>
-                            <button onclick="deletarComprovante(${c.id})" class="w-full bg-red-100 text-red-600 text-[10px] font-bold py-1 rounded">Excluir</button>
+                            <button onclick="deletarComprovante('${c.id}')" class="w-full bg-red-100 text-red-600 text-[10px] font-bold py-1 rounded">Excluir</button>
                         </div>
                     </div>
                 `;
             });
         }
 
-        // MÍDIA (COM COMPRESSÃO AUTOMÁTICA)
+        // MÍDIA (SALVAS EM COLEÇÃO SEPARADA)
         window.salvarMidia = async function() {
             const desc = document.getElementById('midia-desc').value.trim();
             const fileInput = document.getElementById('midia-file');
@@ -935,26 +957,32 @@
             if(!desc || fileInput.files.length === 0) return alert("Preencha a descrição e selecione uma foto ou vídeo!");
 
             const file = fileInput.files[0];
-            const base64Url = await comprimirImagem(file, 900, 0.75); // Comprime inteligentemente a foto para não estourar o banco
+            const base64Url = await comprimirImagem(file, 900, 0.75);
 
-            if(!data.midia) data.midia = [];
-            data.midia.push({ 
-                id: Date.now(), 
-                desc, 
-                url: base64Url, 
-                tipo: file.type,
-                nomeArquivo: file.name 
-            });
-            
-            document.getElementById('midia-desc').value = '';
-            fileInput.value = '';
-            saveData();
+            const novoId = Date.now().toString();
+            const novaMidia = { desc, url: base64Url, tipo: file.type, nomeArquivo: file.name };
+
+            try {
+                await setDoc(doc(db, "midias", novoId), novaMidia);
+                if(!data.midia) data.midia = [];
+                data.midia.push({ id: novoId, ...novaMidia });
+                
+                document.getElementById('midia-desc').value = '';
+                fileInput.value = '';
+                renderMidia();
+            } catch(e) {
+                alert("Erro ao enviar mídia!");
+                console.error(e);
+            }
         };
 
-        window.deletarMidia = function(id) {
+        window.deletarMidia = async function(id) {
             if(confirm("Deseja remover esta mídia?")) {
-                data.midia = data.midia.filter(m => m.id !== id);
-                saveData();
+                try {
+                    await deleteDoc(doc(db, "midias", id.toString()));
+                    data.midia = data.midia.filter(m => m.id.toString() !== id.toString());
+                    renderMidia();
+                } catch(e) { console.error(e); }
             }
         };
 
@@ -982,7 +1010,7 @@
                         </div>
                         <div class="mt-2 space-y-1">
                             <a href="${m.url}" download="${m.nomeArquivo || 'midia'}" class="block w-full text-center bg-blue-50 text-blue-600 text-[10px] font-bold py-1 rounded hover:bg-blue-100">📥 Baixar Arquivo</a>
-                            <button onclick="deletarMidia(${m.id})" class="w-full bg-red-100 text-red-600 text-[10px] font-bold py-1 rounded">Excluir</button>
+                            <button onclick="deletarMidia('${m.id}')" class="w-full bg-red-100 text-red-600 text-[10px] font-bold py-1 rounded">Excluir</button>
                         </div>
                     </div>
                 `;

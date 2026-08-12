@@ -55,7 +55,12 @@
 
         <!-- ABA 1: INÍCIO (DASHBOARD) -->
         <section id="tab-inicio" class="tab-content active">
-            <h2 class="text-lg font-bold mb-4 text-slate-700">Resumo Financeiro</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-slate-700">Resumo Financeiro</h2>
+                <select id="dash-filtro-mes" onchange="renderDashboard()" class="bg-white border border-slate-300 text-xs text-slate-600 font-semibold rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-1.5 shadow-sm">
+                    <option value="todos">Todos os Meses</option>
+                </select>
+            </div>
             
             <div class="grid grid-cols-2 gap-3 mb-6">
                 <div class="col-span-2 bg-emerald-500 text-white p-4 rounded-xl shadow-sm">
@@ -63,16 +68,12 @@
                     <p id="dash-saldo" class="text-3xl font-black mt-1">R$ 0,00</p>
                 </div>
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="text-slate-500 text-[10px] font-bold uppercase">Saídas (Total)</h3>
-                    <p id="dash-saidas" class="text-lg font-bold text-red-500 mt-1">R$ 0,00</p>
+                    <h3 class="text-slate-500 text-xs font-bold uppercase">Saídas (Total)</h3>
+                    <p id="dash-saidas" class="text-xl font-bold text-red-500 mt-1">R$ 0,00</p>
                 </div>
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="text-slate-500 text-[10px] font-bold uppercase">Gasto c/ Quadra</h3>
-                    <p id="dash-quadra" class="text-lg font-bold text-orange-500 mt-1">R$ 0,00</p>
-                </div>
-                <div class="col-span-2 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="text-slate-500 text-[10px] font-bold uppercase">Gasto c/ Goleiros</h3>
-                    <p id="dash-goleiro" class="text-lg font-bold text-blue-500 mt-1">R$ 0,00</p>
+                    <h3 class="text-slate-500 text-xs font-bold uppercase">Gasto c/ Quadra</h3>
+                    <p id="dash-quadra" class="text-xl font-bold text-orange-500 mt-1">R$ 0,00</p>
                 </div>
             </div>
             
@@ -160,12 +161,6 @@
         <section id="tab-sorteio" class="tab-content">
             <h2 class="text-lg font-bold mb-4 text-slate-700">Sorteio da Pelada</h2>
             <div class="bg-white p-6 rounded-xl shadow-sm mb-4 border border-slate-200 text-center">
-                
-                <div class="mb-6">
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Total de Números para o Sorteio</label>
-                    <input type="number" id="max-sorteio" min="1" max="20" value="20" onchange="reiniciarSorteioNums()" class="w-24 mx-auto text-center border rounded-lg p-2 text-sm font-bold focus:ring-emerald-500 focus:border-emerald-500">
-                </div>
-
                 <p class="text-xs text-slate-500 mb-6">Toque no círculo para girar e sortear um número!</p>
                 
                 <!-- Círculo Giratório -->
@@ -178,7 +173,7 @@
                     <p id="lista-nums-disp" class="text-xs text-slate-600 text-center leading-relaxed font-mono">1 • 2 • 3 • 4 • 5 • 6 • 7 • 8 • 9 • 10 • 11 • 12 • 13 • 14 • 15 • 16 • 17 • 18 • 19 • 20</p>
                 </div>
 
-                <button onclick="reiniciarSorteioNums()" class="w-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold py-2.5 rounded-xl text-sm transition-all shadow-sm">Reiniciar Números</button>
+                <button onclick="reiniciarSorteioNums()" class="w-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold py-2.5 rounded-xl text-sm transition-all shadow-sm">Reiniciar Números (1 a 20)</button>
             </div>
         </section>
 
@@ -416,8 +411,6 @@
         <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
             <h2 id="modal-trans-title" class="text-xl font-bold mb-4">Nova Transação</h2>
             <input type="hidden" id="trans-tipo">
-            <input type="hidden" id="trans-id">
-            
             <div class="mb-4">
                 <label class="block text-sm font-semibold text-slate-600 mb-1">Descrição</label>
                 <input type="text" id="trans-desc" class="w-full border rounded-lg p-2" placeholder="Ex: Saldo em Carteira Retroativo">
@@ -427,22 +420,14 @@
                 <input type="number" id="trans-valor" step="0.01" class="w-full border rounded-lg p-2" placeholder="0.00">
             </div>
             <div class="mb-4">
-                <label class="block text-sm font-semibold text-slate-600 mb-1">Data do Lançamento</label>
-                <input type="date" id="trans-data" class="w-full border rounded-lg p-2">
-            </div>
-            <div class="mb-4">
                 <label class="block text-sm font-semibold text-slate-600 mb-1">Mês de Referência (Opcional)</label>
                 <input type="month" id="trans-mes" class="w-full border rounded-lg p-2">
             </div>
             
-            <div id="area-despesas-opcoes" class="mb-4 hidden space-y-2">
+            <div id="area-is-quadra" class="mb-4 hidden">
                 <label class="flex items-center space-x-2">
                     <input type="checkbox" id="trans-quadra" class="w-5 h-5 text-emerald-600 bg-slate-100 border-slate-300 rounded">
                     <span class="text-sm font-semibold text-slate-600">Este valor é o pagamento da Quadra</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="trans-goleiro" class="w-5 h-5 text-blue-600 bg-slate-100 border-slate-300 rounded">
-                    <span class="text-sm font-semibold text-slate-600">Este valor é pagamento de Goleiros</span>
                 </label>
             </div>
 
@@ -487,14 +472,19 @@
 
         let partidaAtualId = null;
         let chartFin = null, chartEvolucao = null, chartFreq = null, chartAvulsos = null;
-        let numerosDisponiveis = [];
+        let numerosDisponiveis = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
         let girandoSorteio = false;
+
+        // Função para normalizar strings de texto (remove acentos, espaços e deixa minúsculo)
+        function normalizarNome(nome) {
+            if (!nome) return "";
+            return nome.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
 
         // Função para comprimir imagens automaticamente e economizar espaço no banco de dados
         function comprimirImagem(file, maxWidth = 800, quality = 0.7) {
             return new Promise((resolve) => {
                 if (!file.type.startsWith('image/')) {
-                    // Se não for imagem (ex: PDF ou vídeo), retorna direto
                     const reader = new FileReader();
                     reader.onload = (e) => resolve(e.target.result);
                     reader.readAsDataURL(file);
@@ -519,8 +509,6 @@
 
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-
-                        // Converte para JPEG comprimido
                         resolve(canvas.toDataURL('image/jpeg', quality));
                     };
                     img.src = event.target.result;
@@ -538,9 +526,10 @@
             const userEncontrado = data.usuarios.find(item => item.user === u && item.pass === p);
             
             if(userEncontrado) {
-                userEncontrado.ultimoLogin = new Date().toISOString();
-                saveData(); // Salva a data do último login no banco
                 localStorage.setItem('pelada_aguaviva_logada', 'true');
+                // Grava o último login com a data atual
+                localStorage.setItem(`ultimoLogin_${userEncontrado.user}`, new Date().toLocaleString('pt-BR'));
+                
                 document.getElementById('modal-login').classList.remove('active');
             } else {
                 alert("Usuário ou senha incorretos!");
@@ -594,7 +583,6 @@
 
         window.saveData = async function() {
             try {
-                // Remove os arrays de imagens do documento principal para ele ficar super leve
                 const dadosSalvar = { ...data };
                 delete dadosSalvar.comprovantes;
                 delete dadosSalvar.midia;
@@ -616,7 +604,6 @@
                     data = docSnap.data();
                     if(!data.usuarios) data.usuarios = [{ id: 1, user: "admin", pass: data.adminPass || "1234" }];
                     
-                    // MIGRAR DADOS ANTIGOS: Joga imagens antigas para coleções separadas
                     if(data.comprovantes && data.comprovantes.length > 0) {
                         for(let c of data.comprovantes) await setDoc(doc(db, "comprovantes", c.id.toString()), c);
                     }
@@ -627,7 +614,6 @@
                     await saveData();
                 }
 
-                // BUSCAR IMAGENS DE SUAS RESPECTIVAS PASTAS (Coleções)
                 const compSnap = await getDocs(collection(db, "comprovantes"));
                 data.comprovantes = compSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -661,7 +647,6 @@
             if(tabId === 'tab-comprovantes') renderComprovantes();
             if(tabId === 'tab-midia') renderMidia();
             if(tabId === 'tab-relatorios') renderRelatorios();
-            if(tabId === 'tab-sorteio' && numerosDisponiveis.length === 0) window.reiniciarSorteioNums();
         }
 
         function renderUsuarios() {
@@ -670,16 +655,15 @@
             if(!data.usuarios) data.usuarios = [{ id: 1, user: "admin", pass: "1234" }];
 
             data.usuarios.forEach(u => {
-                let txtData = '';
-                if(u.ultimoLogin) {
-                    const dt = new Date(u.ultimoLogin);
-                    txtData = `<span class="block text-[10px] text-slate-400 font-normal mt-1">Último login: ${dt.toLocaleDateString('pt-BR')} às ${dt.toLocaleTimeString('pt-BR')}</span>`;
-                }
-
+                const ultimoLogin = localStorage.getItem(`ultimoLogin_${u.user}`) || 'Nunca acessou';
+                
                 list.innerHTML += `
                     <li class="flex justify-between items-center p-2 bg-slate-50 rounded border border-slate-100">
-                        <div class="text-sm font-semibold text-slate-700">👤 ${u.user} ${txtData}</div>
-                        ${u.user !== 'admin' ? `<button onclick="deletarUsuario(${u.id})" class="text-xs text-red-500 font-bold bg-red-100 px-2 py-1 rounded">Remover</button>` : '<span class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded">Principal</span>'}
+                        <div>
+                            <span class="text-sm font-semibold text-slate-700 block">👤 ${u.user}</span>
+                            <span class="text-[10px] text-slate-500">Último acesso: ${ultimoLogin}</span>
+                        </div>
+                        ${u.user !== 'admin' ? `<button onclick="deletarUsuario(${u.id})" class="text-xs text-red-500 font-bold bg-red-100 px-2 py-1 rounded">Remover</button>` : '<span class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded mt-1">Principal</span>'}
                     </li>
                 `;
             });
@@ -879,35 +863,24 @@
             clearInterval(intervaloGiro);
             girandoSorteio = false;
             document.getElementById('circulo-sorteio').classList.remove('animate-pulse');
-            
-            let maxSorteio = parseInt(document.getElementById('max-sorteio').value) || 20;
-            if (maxSorteio > 20) { maxSorteio = 20; document.getElementById('max-sorteio').value = 20; }
-            if (maxSorteio < 1) { maxSorteio = 1; document.getElementById('max-sorteio').value = 1; }
-
-            numerosDisponiveis = [];
-            for (let i = 1; i <= maxSorteio; i++) {
-                numerosDisponiveis.push(i);
-            }
-            
+            numerosDisponiveis = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
             document.getElementById('numero-sorteado').innerText = "?";
             atualizarDisplayNums();
         };
 
         function atualizarDisplayNums() {
-            let max = parseInt(document.getElementById('max-sorteio').value) || 20;
-            if (max > 20) max = 20;
             let texto = "";
-            for (let i = 1; i <= max; i++) {
+            for (let i = 1; i <= 20; i++) {
                 if (numerosDisponiveis.includes(i)) {
-                    texto += i + (i < max ? " • " : "");
+                    texto += i + (i < 20 ? " • " : "");
                 } else {
-                    texto += `<span class="text-slate-300 line-through">${i}</span>` + (i < max ? " • " : "");
+                    texto += `<span class="text-slate-300 line-through">${i}</span>` + (i < 20 ? " • " : "");
                 }
             }
             document.getElementById('lista-nums-disp').innerHTML = texto;
         }
 
-        // COMPROVANTES (SALVOS EM COLEÇÃO SEPARADA)
+        // COMPROVANTES
         window.salvarComprovante = async function() {
             const desc = document.getElementById('comp-desc').value.trim();
             const dataComp = document.getElementById('comp-data').value;
@@ -989,7 +962,7 @@
             });
         }
 
-        // MÍDIA (SALVAS EM COLEÇÃO SEPARADA)
+        // MÍDIA
         window.salvarMidia = async function() {
             const desc = document.getElementById('midia-desc').value.trim();
             const fileInput = document.getElementById('midia-file');
@@ -1091,23 +1064,17 @@
             data.transacoes.forEach(t => {
                 const valorF = formatarMoeda(parseFloat(t.valor));
                 const badgeQuadra = t.isQuadra ? `<span class="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded ml-2 uppercase">Quadra</span>` : '';
-                const badgeGoleiro = t.isGoleiro ? `<span class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded ml-2 uppercase">Goleiro</span>` : '';
-                
-                // Exibe a Data específica do lançamento ou o Mês de Referência como fallback
-                const dataDisplay = t.data ? formatDataBR(t.data) : (t.mesRef || '');
-                const textData = dataDisplay ? `<p class="text-[10px] text-slate-500 font-bold mb-1">📅 ${dataDisplay}</p>` : '';
+                const refMes = t.mesRef ? ` <span class="text-slate-400 text-xs">(${t.mesRef})</span>` : '';
 
                 if (t.tipo === 'receita') {
                     totRecManuais += parseFloat(t.valor);
                     listRec.innerHTML += `
                         <div class="flex justify-between items-center border-b pb-2 mt-2">
                             <div>
-                                ${textData}
-                                <p class="font-semibold text-sm text-slate-700">${t.desc}</p>
+                                <p class="font-semibold text-sm text-slate-700">${t.desc} ${refMes}</p>
                             </div>
-                            <div class="flex items-center space-x-1">
-                                <span class="font-bold text-emerald-600 mr-2">${valorF}</span>
-                                <button onclick="openTransModal('receita', ${t.id})" class="text-xs text-blue-500 font-bold bg-blue-100 px-2 py-1 rounded">Edit</button>
+                            <div class="flex items-center space-x-3">
+                                <span class="font-bold text-emerald-600">${valorF}</span>
                                 <button onclick="deleteTransaction(${t.id})" class="text-xs text-red-500 font-bold bg-slate-100 px-2 py-1 rounded">X</button>
                             </div>
                         </div>`;
@@ -1115,13 +1082,9 @@
                     totDes += parseFloat(t.valor);
                     listDes.innerHTML += `
                         <div class="flex justify-between items-center border-b pb-2 mt-2">
-                            <div>
-                                ${textData}
-                                <p class="font-semibold text-sm text-slate-700 flex items-center">${t.desc} ${badgeQuadra} ${badgeGoleiro}</p>
-                            </div>
-                            <div class="flex items-center space-x-1">
-                                <span class="font-bold text-red-600 mr-2">- ${valorF}</span>
-                                <button onclick="openTransModal('despesa', ${t.id})" class="text-xs text-blue-500 font-bold bg-blue-100 px-2 py-1 rounded">Edit</button>
+                            <p class="font-semibold text-sm text-slate-700 flex items-center">${t.desc} ${refMes} ${badgeQuadra}</p>
+                            <div class="flex items-center space-x-3">
+                                <span class="font-bold text-red-600">- ${valorF}</span>
                                 <button onclick="deleteTransaction(${t.id})" class="text-xs text-red-500 font-bold bg-slate-100 px-2 py-1 rounded">X</button>
                             </div>
                         </div>`;
@@ -1133,93 +1096,140 @@
             document.getElementById('total-despesas').innerText = formatarMoeda(totDes);
         }
 
-        function renderDashboard() {
-            let totRecManuais = 0, totDes = 0, totQuadra = 0, totGoleiro = 0;
-            const mesesMap = {};
-            const avulsosMap = {};
-            
-            data.transacoes.forEach(t => {
-                if (t.tipo === 'receita') {
-                    totRecManuais += parseFloat(t.valor);
-                }
-                if (t.tipo === 'despesa') {
-                    totDes += parseFloat(t.valor);
-                    if(t.isQuadra) totQuadra += parseFloat(t.valor);
-                    if(t.isGoleiro) totGoleiro += parseFloat(t.valor);
-                }
+        // Criador Dinâmico das Opções do Select (sem travar)
+        function atualizarFiltroMesesDashboard() {
+            const filtroMes = document.getElementById('dash-filtro-mes');
+            if (!filtroMes) return;
 
-                const mesAno = t.mesRef || new Date().toISOString().substring(0, 7);
-                if (!mesesMap[mesAno]) mesesMap[mesAno] = { receitas: 0, despesas: 0 };
-                if (t.tipo === 'receita') mesesMap[mesAno].receitas += parseFloat(t.valor);
-                if (t.tipo === 'despesa') mesesMap[mesAno].despesas += parseFloat(t.valor);
+            const mesAtualSelecionado = filtroMes.value || 'todos';
+            const availableMonths = new Set();
+
+            data.transacoes.forEach(t => {
+                availableMonths.add(t.mesRef || (t.data ? t.data.substring(0, 7) : new Date().toISOString().substring(0, 7)));
+            });
+            data.partidas.forEach(p => {
+                availableMonths.add(p.data.substring(0, 7));
+            });
+
+            filtroMes.innerHTML = '<option value="todos">Todos os Meses</option>';
+            const sortedMonths = Array.from(availableMonths).sort().reverse();
+            sortedMonths.forEach(m => {
+                if(!m) return;
+                const [ano, mes] = m.split('-');
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.text = `${mes}/${ano}`;
+                filtroMes.appendChild(opt);
+            });
+
+            if (Array.from(filtroMes.options).some(o => o.value === mesAtualSelecionado)) {
+                filtroMes.value = mesAtualSelecionado;
+            } else {
+                filtroMes.value = 'todos';
+            }
+        }
+
+        function renderDashboard() {
+            const filtroMes = document.getElementById('dash-filtro-mes');
+            const mesSelecionado = filtroMes ? filtroMes.value : 'todos';
+
+            const agregacaoMensal = {};
+            let globalTotReceitas = 0;
+            let globalTotDespesas = 0;
+
+            // Agrupa os dados
+            data.transacoes.forEach(t => {
+                const mesAno = t.mesRef || (t.data ? t.data.substring(0, 7) : new Date().toISOString().substring(0, 7));
+                if (!agregacaoMensal[mesAno]) agregacaoMensal[mesAno] = { recManuais: 0, despesas: 0, quadra: 0, autoAvulsos: 0, autoMensal: 0 };
+
+                if (t.tipo === 'receita') agregacaoMensal[mesAno].recManuais += parseFloat(t.valor);
+                if (t.tipo === 'despesa') {
+                    agregacaoMensal[mesAno].despesas += parseFloat(t.valor);
+                    if (t.isQuadra) agregacaoMensal[mesAno].quadra += parseFloat(t.valor);
+                }
             });
 
             data.partidas.forEach(p => {
                 const mesAno = p.data.substring(0, 7);
-                if (!mesesMap[mesAno]) mesesMap[mesAno] = { receitas: 0, despesas: 0 };
-                if (!avulsosMap[mesAno]) avulsosMap[mesAno] = 0;
-                
+                if (!agregacaoMensal[mesAno]) agregacaoMensal[mesAno] = { recManuais: 0, despesas: 0, quadra: 0, autoAvulsos: 0, autoMensal: 0 };
+
                 p.jogadores.forEach(j => {
                     if (j.metodoPagamento && j.metodoPagamento !== 'isento') {
                         if (j.tipo === 'avulso') {
-                            const valAv = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_AVULSO;
-                            mesesMap[mesAno].receitas += valAv;
-                            avulsosMap[mesAno] += valAv;
+                            const val = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_AVULSO;
+                            agregacaoMensal[mesAno].autoAvulsos += val;
                         } else if (j.tipo === 'mensalista') {
                             const val = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_MENSALISTA;
-                            mesesMap[mesAno].receitas += val;
+                            agregacaoMensal[mesAno].autoMensal += val;
                         }
                     }
                 });
             });
 
-            const autoCalc = calcularReceitasAutomaticas();
-            const totReceitasGeral = totRecManuais + autoCalc.totalAvulsos + autoCalc.totalMensalistas;
-            const saldo = totReceitasGeral - totDes;
-            
-            document.getElementById('header-saldo').innerText = formatarMoeda(saldo);
-            document.getElementById('dash-saldo').innerText = formatarMoeda(saldo);
-            document.getElementById('dash-saidas').innerText = formatarMoeda(totDes);
-            document.getElementById('dash-quadra').innerText = formatarMoeda(totQuadra);
-            document.getElementById('dash-goleiro').innerText = formatarMoeda(totGoleiro);
+            let totReceitasFiltrado = 0, totDesFiltrado = 0, totQuadraFiltrado = 0;
+            let labelsMeses = [], valoresReceitasMes = [], valoresDespesasMes = [], labelsAvulsos = [], valoresAvulsos = [];
 
-            const mesesOrdenados = Object.keys(mesesMap).sort();
-            const labelsMeses = mesesOrdenados.map(m => {
-                const [ano, mes] = m.split('-');
-                return `${mes}/${ano}`;
+            const chavesOrdenadas = Object.keys(agregacaoMensal).sort();
+
+            chavesOrdenadas.forEach(mes => {
+                const m = agregacaoMensal[mes];
+                const recMes = m.recManuais + m.autoAvulsos + m.autoMensal;
+                const desMes = m.despesas;
+
+                // Soma o Saldo global (sem filtro) para o cabeçalho superior (sempre fixo)
+                globalTotReceitas += recMes;
+                globalTotDespesas += desMes;
+
+                // Aplica o Filtro de Tela
+                if (mesSelecionado === 'todos' || mesSelecionado === mes) {
+                    totReceitasFiltrado += recMes;
+                    totDesFiltrado += desMes;
+                    totQuadraFiltrado += m.quadra;
+
+                    const [ano, mStr] = mes.split('-');
+                    const label = `${mStr}/${ano}`;
+
+                    labelsMeses.push(label);
+                    valoresReceitasMes.push(recMes);
+                    valoresDespesasMes.push(desMes);
+
+                    labelsAvulsos.push(label);
+                    valoresAvulsos.push(m.autoAvulsos);
+                }
             });
-            const valoresReceitasMes = mesesOrdenados.map(m => mesesMap[m].receitas);
-            const valoresDespesasMes = mesesOrdenados.map(m => mesesMap[m].despesas);
 
+            const saldoFiltrado = totReceitasFiltrado - totDesFiltrado;
+            const saldoGlobal = globalTotReceitas - globalTotDespesas;
+
+            // Atualiza os Caixas de Texto (Cards)
+            document.getElementById('header-saldo').innerText = formatarMoeda(saldoGlobal);
+            document.getElementById('dash-saldo').innerText = formatarMoeda(saldoFiltrado);
+            document.getElementById('dash-saidas').innerText = formatarMoeda(totDesFiltrado);
+            document.getElementById('dash-quadra').innerText = formatarMoeda(totQuadraFiltrado);
+
+            // Atualiza os Gráficos
             if (chartEvolucao) chartEvolucao.destroy();
             const ctxEvolucao = document.getElementById('chartEvolucaoMensal').getContext('2d');
             chartEvolucao = new Chart(ctxEvolucao, {
                 type: 'bar',
                 data: {
-                    labels: labelsMeses.length > 0 ? labelsMeses : ['Atual'],
+                    labels: labelsMeses.length > 0 ? labelsMeses : ['Sem dados'],
                     datasets: [
-                        { label: 'Arrecadação', data: valoresReceitasMes.length > 0 ? valoresReceitasMes : [totReceitasGeral], backgroundColor: '#10b981', borderRadius: 4 },
-                        { label: 'Despesas', data: valoresDespesasMes.length > 0 ? valoresDespesasMes : [totDes], backgroundColor: '#ef4444', borderRadius: 4 }
+                        { label: 'Arrecadação', data: valoresReceitasMes.length > 0 ? valoresReceitasMes : [0], backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'Despesas', data: valoresDespesasMes.length > 0 ? valoresDespesasMes : [0], backgroundColor: '#ef4444', borderRadius: 4 }
                     ]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } }, animation: { duration: 250 } }
             });
-
-            const mesesAvulsosOrdenados = Object.keys(avulsosMap).sort();
-            const labelsAvulsos = mesesAvulsosOrdenados.map(m => {
-                const [ano, mes] = m.split('-');
-                return `${mes}/${ano}`;
-            });
-            const valoresAvulsos = mesesAvulsosOrdenados.map(m => avulsosMap[m]);
 
             if (chartAvulsos) chartAvulsos.destroy();
             const ctxAvulsos = document.getElementById('chartAvulsosMensal').getContext('2d');
             chartAvulsos = new Chart(ctxAvulsos, {
                 type: 'line',
                 data: {
-                    labels: labelsAvulsos.length > 0 ? labelsAvulsos : ['Nenhum dado'],
+                    labels: labelsAvulsos.length > 0 ? labelsAvulsos : ['Sem dados'],
                     datasets: [{
-                        label: 'Avulsos Acumulados',
+                        label: 'Avulsos',
                         data: valoresAvulsos.length > 0 ? valoresAvulsos : [0],
                         borderColor: '#f97316',
                         backgroundColor: 'rgba(249, 115, 22, 0.1)',
@@ -1228,7 +1238,7 @@
                         tension: 0.3
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } }, animation: { duration: 250 } }
             });
 
             if (chartFin) chartFin.destroy();
@@ -1236,10 +1246,10 @@
             chartFin = new Chart(ctxFin, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Entradas', 'Saídas', 'Quadra', 'Goleiros'],
-                    datasets: [{ data: [totReceitasGeral, totDes, totQuadra, totGoleiro], backgroundColor: ['#10b981', '#ef4444', '#f97316', '#3b82f6'] }]
+                    labels: ['Entradas', 'Saídas', 'Gasto Quadra'],
+                    datasets: [{ data: [totReceitasFiltrado, totDesFiltrado, totQuadraFiltrado], backgroundColor: ['#10b981', '#ef4444', '#f97316'] }]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } }, animation: { duration: 250 } }
             });
         }
 
@@ -1252,8 +1262,10 @@
                 p.jogadores.forEach(j => {
                     if (j.tipo === 'avulso' && j.metodoPagamento && j.metodoPagamento !== 'isento') {
                         const val = j.valorCustom !== undefined && j.valorCustom !== '' ? parseFloat(j.valorCustom) : VALOR_PADRAO_AVULSO;
-                        if (!avulsosPorMes[mesAno][j.nome]) avulsosPorMes[mesAno][j.nome] = 0;
-                        avulsosPorMes[mesAno][j.nome] += val;
+                        const chave = normalizarNome(j.nome);
+                        
+                        if (!avulsosPorMes[mesAno][chave]) avulsosPorMes[mesAno][chave] = { nomeExibicao: j.nome.trim(), total: 0 };
+                        avulsosPorMes[mesAno][chave].total += val;
                     }
                 });
             });
@@ -1265,14 +1277,16 @@
             Object.keys(avulsosPorMes).sort().reverse().forEach(mesAno => {
                 const [ano, mes] = mesAno.split('-');
                 
-                Object.keys(avulsosPorMes[mesAno]).forEach(nome => {
-                    const totalGasto = avulsosPorMes[mesAno][nome];
+                Object.keys(avulsosPorMes[mesAno]).forEach(chave => {
+                    const objAvulso = avulsosPorMes[mesAno][chave];
+                    const totalGasto = objAvulso.total;
+                    
                     if (totalGasto > 60) {
                         encontrouGastao = true;
                         listaAvulsosHTML.innerHTML += `
                             <div class="flex justify-between items-center bg-orange-50 p-2.5 rounded-lg border border-orange-200 mt-2">
                                 <div>
-                                    <p class="font-bold text-sm text-orange-900">${nome}</p>
+                                    <p class="font-bold text-sm text-orange-900">${objAvulso.nomeExibicao}</p>
                                     <p class="text-[10px] text-orange-700 font-semibold">Mês: ${mes}/${ano}</p>
                                 </div>
                                 <span class="font-black text-orange-700">${formatarMoeda(totalGasto)}</span>
@@ -1290,22 +1304,28 @@
             data.partidas.forEach(p => {
                 p.jogadores.forEach(j => {
                     if (j.tipo === 'mensalista') {
-                        if (!freqMensalistas[j.nome]) freqMensalistas[j.nome] = { presencas: 0, faltas: 0 };
-                        if (j.presente) freqMensalistas[j.nome].presencas++;
-                        else freqMensalistas[j.nome].faltas++;
+                        const chave = normalizarNome(j.nome);
+                        if (!freqMensalistas[chave]) freqMensalistas[chave] = { nomeExibicao: j.nome.trim(), presencas: 0, faltas: 0 };
+                        
+                        if (j.presente) freqMensalistas[chave].presencas++;
+                        else freqMensalistas[chave].faltas++;
                     }
                 });
             });
 
             const listaFreqHTML = document.getElementById('lista-frequencia-mensalistas');
             listaFreqHTML.innerHTML = '';
-            const nomesMensalistas = Object.keys(freqMensalistas).sort();
+            
+            const chavesMensalistas = Object.keys(freqMensalistas).sort((a, b) => 
+                freqMensalistas[a].nomeExibicao.localeCompare(freqMensalistas[b].nomeExibicao)
+            );
 
-            if(nomesMensalistas.length === 0) {
+            if(chavesMensalistas.length === 0) {
                 listaFreqHTML.innerHTML = '<p class="text-xs text-slate-400 py-2">Nenhum mensalista cadastrado no histórico.</p>';
             } else {
-                nomesMensalistas.forEach(nome => {
-                    const f = freqMensalistas[nome];
+                chavesMensalistas.forEach(chave => {
+                    const f = freqMensalistas[chave];
+                    const nome = f.nomeExibicao;
                     const totalJogos = f.presencas + f.faltas;
                     const perc = totalJogos === 0 ? 0 : Math.round((f.presencas / totalJogos) * 100);
                     
@@ -1360,6 +1380,7 @@
         }
 
         function renderAll() {
+            atualizarFiltroMesesDashboard();
             renderTercas();
             renderFinanceiro();
             renderDashboard();
@@ -1448,61 +1469,36 @@
             }
         }
 
-        window.openTransModal = function(tipo, id = null) {
+        window.openTransModal = function(tipo) {
             document.getElementById('trans-tipo').value = tipo;
-            const checkOpcoes = document.getElementById('area-despesas-opcoes');
-            document.getElementById('trans-id').value = id ? id : '';
+            document.getElementById('trans-desc').value = '';
+            document.getElementById('trans-valor').value = '';
+            document.getElementById('trans-mes').value = new Date().toISOString().substring(0, 7);
+            
+            const checkQuadra = document.getElementById('area-is-quadra');
+            document.getElementById('trans-quadra').checked = false;
 
             if (tipo === 'despesa') {
-                checkOpcoes.classList.remove('hidden');
+                checkQuadra.classList.remove('hidden');
             } else {
-                checkOpcoes.classList.add('hidden');
+                checkQuadra.classList.add('hidden');
             }
 
-            if (id) {
-                // Modo Edição
-                const t = data.transacoes.find(x => x.id === id);
-                document.getElementById('trans-desc').value = t.desc;
-                document.getElementById('trans-valor').value = t.valor;
-                document.getElementById('trans-data').value = t.data || '';
-                document.getElementById('trans-mes').value = t.mesRef || '';
-                document.getElementById('trans-quadra').checked = t.isQuadra || false;
-                document.getElementById('trans-goleiro').checked = t.isGoleiro || false;
-                document.getElementById('modal-trans-title').innerText = 'Editar Transação';
-            } else {
-                // Modo Novo
-                document.getElementById('trans-desc').value = '';
-                document.getElementById('trans-valor').value = '';
-                document.getElementById('trans-data').value = new Date().toISOString().split('T')[0]; // Preenche com data de hoje
-                document.getElementById('trans-mes').value = new Date().toISOString().substring(0, 7);
-                document.getElementById('trans-quadra').checked = false;
-                document.getElementById('trans-goleiro').checked = false;
-                document.getElementById('modal-trans-title').innerText = tipo === 'receita' ? 'Lançar Receita' : 'Lançar Despesa';
-            }
-
+            document.getElementById('modal-trans-title').innerText = tipo === 'receita' ? 'Lançar Receita / Saldo Retroativo' : 'Lançar Despesa';
             document.getElementById('modal-transacao').classList.add('active');
         }
 
         window.saveTransaction = function() {
-            const id = document.getElementById('trans-id').value;
             const desc = document.getElementById('trans-desc').value;
             const valor = parseFloat(document.getElementById('trans-valor').value);
             const tipo = document.getElementById('trans-tipo').value;
             const mesRef = document.getElementById('trans-mes').value;
-            const dataLanc = document.getElementById('trans-data').value;
             const isQuadra = tipo === 'despesa' ? document.getElementById('trans-quadra').checked : false;
-            const isGoleiro = tipo === 'despesa' ? document.getElementById('trans-goleiro').checked : false;
 
             if(!desc || isNaN(valor) || valor <= 0) return alert("Preencha corretamente!");
 
-            if (id) {
-                const t = data.transacoes.find(x => x.id == id);
-                t.desc = desc; t.valor = valor; t.mesRef = mesRef; t.data = dataLanc;
-                t.isQuadra = isQuadra; t.isGoleiro = isGoleiro;
-            } else {
-                const novoId = data.transacoes.length > 0 ? Math.max(...data.transacoes.map(t => t.id)) + 1 : 1;
-                data.transacoes.push({ id: novoId, desc, valor, tipo, mesRef, data: dataLanc, isQuadra, isGoleiro });
-            }
+            const novoId = data.transacoes.length > 0 ? Math.max(...data.transacoes.map(t => t.id)) + 1 : 1;
+            data.transacoes.push({ id: novoId, desc, valor, tipo, mesRef, isQuadra });
             closeModals();
             saveData();
         }

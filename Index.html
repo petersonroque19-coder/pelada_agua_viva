@@ -475,6 +475,9 @@
         let numerosDisponiveis = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
         let girandoSorteio = false;
 
+        // Exportação crucial para que o select do HTML consiga disparar a função
+        window.renderDashboard = renderDashboard;
+
         // Função para normalizar strings de texto (remove acentos, espaços e deixa minúsculo)
         function normalizarNome(nome) {
             if (!nome) return "";
